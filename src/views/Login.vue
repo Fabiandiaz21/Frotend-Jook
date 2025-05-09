@@ -129,11 +129,11 @@ const login = async () => {
           $q.notify({
             type: 'positive',
             message: 'Inicio de sesión exitoso',
-            position: 'top-right'
+            position: 'top'
           });
 
           // Redirigir a la vista de agregar productos
-          router.replace('/Agregar'); // Aquí va la ruta de agregar productos
+          router.replace('/admin/Agregar'); // Aquí va la ruta de agregar productos
         } else {
           // Redirigir a la vista normal para clientes o vendedores
           router.replace('/inicio');
@@ -160,7 +160,7 @@ const register = async () => {
     $q.notify({
       type: 'warning',
       message: 'Las contraseñas no coinciden',
-      position: 'topt'
+      position: 'top'
     });
     loading.value = false;
     return;

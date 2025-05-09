@@ -16,7 +16,6 @@
         <q-route-tab to="/productos" label="Productos" />
 
         <!-- Solo mostrar el tab de "Agregar Productos" si el usuario es admin -->
-        <q-route-tab v-if="isAdmin" to="/Agregar" label="Agregar Productos" />
       </q-tabs>
     </q-header>
 
