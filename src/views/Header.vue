@@ -2,20 +2,57 @@
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="custom-header" height-hint="98">
       <q-toolbar class="bg-brown">
-        <q-toolbar-title class="flex flex-center" id="titulo">
+
+        <!-- Título -->
+        <q-toolbar-title class="flex items-center" id="titulo">
           <q-avatar />
-          Jook
+          <span class="q-ml-sm">Jook</span>
         </q-toolbar-title>
 
-        <!-- Botón para abrir el modal -->
-        <q-btn flat dense icon="logout" @click="showLogoutModal = true" class="q-mr-md" />
+        <!-- Barra de búsqueda -->
+        <q-input
+          dense
+          outlined
+          debounce="300"
+          v-model="searchQuery"
+          placeholder="Buscar..."
+          class="q-mr-md"
+          rounded
+          bg-color="white"
+          style="max-width: 250px"
+        >
+          <template #append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+
+        <!-- Menú de usuario -->
+        <q-btn round flat dense icon="account_circle" class="q-mr-sm">
+          <q-menu>
+            <q-list style="min-width: 150px">
+              <q-item clickable v-close-popup>
+                <q-item-section>
+                  <q-item-label>Hola, Usuario</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="goToProfile">
+                <q-item-section>
+                  <q-item-label>Perfil</q-item-label>
+                </q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="showLogoutModal = true">
+                <q-item-section>
+                  <q-item-label>Cerrar sesión</q-item-label>
+                </q-item-section>
+              </q-item>
+            </q-list>
+          </q-menu>
+        </q-btn>
       </q-toolbar>
 
       <q-tabs align="center" class="bg-brown text-white">
         <q-route-tab to="/inicio" label="Inicio" />
         <q-route-tab to="/productos" label="Productos" />
-
-        <!-- Solo mostrar el tab de "Agregar Productos" si el usuario es admin -->
       </q-tabs>
     </q-header>
 
@@ -40,14 +77,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 
-// Verificamos si el usuario es admin basándonos en localStorage
 const isAdmin = ref(localStorage.getItem('userRole') === 'admin');
-
 const showLogoutModal = ref(false);
+const searchQuery = ref('');
 const router = useRouter();
 const $q = useQuasar();
 
@@ -60,8 +96,12 @@ const logout = () => {
   });
 
   setTimeout(() => {
-    router.push("/"); // Redirigir a la página principal
+    router.push("/");
   }, 1000);
+};
+
+const goToProfile = () => {
+  router.push("/perfil");
 };
 </script>
 
@@ -70,10 +110,10 @@ const logout = () => {
   font-family: 'Times New Roman', Times, serif;
   font-size: 30px;
   font-weight: 700;
-  color: white; /* Texto blanco */
+  color: white;
 }
 
 .custom-header {
-  background-color: #8B4513; /* Fondo principal café del header */
+  background-color: #8B4513;
 }
 </style>

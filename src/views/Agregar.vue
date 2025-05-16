@@ -44,6 +44,9 @@
         <q-card-section>
           <q-form @submit.prevent="handleEditProduct">
             <q-input v-model="productToEdit.nombre" label="Nombre del Producto" outlined dense required />
+            <q-input v-model="productToEdit.marca" label="Marca" outlined dense />
+            <q-input v-model="productToEdit.tipo" label="Tipo" outlined dense />
+
             <q-input v-model="productToEdit.descripcion" label="Descripción" outlined dense required />
             <q-input v-model="productToEdit.price" label="Precio" type="number" outlined dense required />
             <q-select v-model="productToEdit.categoryId" :options="categories" label="Categoría" outlined dense
@@ -105,6 +108,8 @@
         <q-card-section>
           <q-form @submit.prevent="handleAddProduct">
             <q-input v-model="productName" label="Nombre del Producto" outlined dense required />
+            <q-input v-model="productMarca" label="Marca" outlined dense required />
+            <q-input v-model="productTipo" label="Tipo" outlined dense required />
             <q-input v-model="productDescription" label="Descripción" outlined dense required />
             <q-input v-model="productPrice" label="Precio" type="number" outlined dense required />
             <q-select v-model="categoryId" :options="categories" label="Categoría" outlined dense emit-value map-options
@@ -163,6 +168,8 @@ const $q = useQuasar();
 const dialog = ref(false);
 
 const productName = ref('');
+const productMarca = ref('');
+const productTipo = ref('');
 const productDescription = ref('');
 const productPrice = ref('');
 const productStock = ref('');
@@ -175,6 +182,8 @@ const imageNames = ref([]);
 
 
 const productToEdit = ref(null);  // Para almacenar el producto que se va a editar
+const productMarcaEdit = ref('');
+const productTipoEdit = ref('');
 const editDialog = ref(false);  // Para controlar la visibilidad del modal de edición
 
 const editImages = ref([]);
@@ -182,8 +191,6 @@ const editImagePreviews = ref([]);
 
 
 const openEditDialog = (producto) => {
-  // Asegurarnos de manejar correctamente la referencia de categoría
-  // El problema está aquí: el código no maneja correctamente la categoría
   let categoriaId;
 
   if (producto.categoryId) {
@@ -191,10 +198,9 @@ const openEditDialog = (producto) => {
       producto.categoryId._id :
       producto.categoryId;
   } else {
-    categoriaId = ''; // Valor por defecto si no hay categoría
+    categoriaId = '';
   }
 
-  // Crear una copia profunda del producto para evitar modificar el original
   productToEdit.value = {
     _id: producto._id,
     nombre: producto.nombre,
@@ -202,14 +208,18 @@ const openEditDialog = (producto) => {
     price: producto.price,
     stock: producto.stock,
     categoryId: categoriaId,
+    marca: producto.marca || '',
+    tipo: producto.tipo || '',
     images: [...(producto.images || [])]
   };
 
-  // Asignar imágenes previas
-  editImagePreviews.value = [...(producto.images || [])];
-  editImages.value = []; // Limpiar los archivos seleccionados anteriormente
 
-  // Abrir el modal de edición
+  // Asignar valores a las refs faltantes (esto era lo que faltaba)
+  productMarcaEdit.value = producto.marca || '';
+  productTipoEdit.value = producto.tipo || '';
+  editImagePreviews.value = [...(producto.images || [])];
+  editImages.value = [];
+
   editDialog.value = true;
 };
 
@@ -218,13 +228,14 @@ const openEditDialog = (producto) => {
 const productos = ref([]);  // Array para almacenar los productos
 const columnas = [
   { name: 'imagen', label: 'Imagen', field: 'imagen', align: 'center' },
+  { name: 'marca', label: 'Marca', field: 'marca', align: 'left' },
+  { name: 'categoriaNombre', label: 'Categoría', field: 'categoriaNombre', align: 'center' },
+  { name: 'tipo', label: 'Tipo', field: 'tipo', align: 'left' },
   { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left' },
-  { name: 'descripcion', label: 'Descripción', field: 'descripcion', align: 'left' },
-  { name: 'categoriaNombre', label: 'Categoría', field: 'categoriaNombre', align: 'right' },
+  { name: 'descripcion', label: 'Descripción', field: 'descripcion', align: 'center' },
   { name: 'precio', label: 'Precio', field: 'price', align: 'right' },
   { name: 'stock', label: 'Stock', field: 'stock', align: 'right' },
-  { name: 'acciones', label: 'Acciones', align: 'center', field: 'acciones' }  // Nueva columna
-
+  { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
 ];
 
 const fetchCategories = async () => {
@@ -246,36 +257,30 @@ const fetchProductos = async () => {
     productos.value = response.map(producto => {
       return {
         ...producto,
-        categoriaNombre: producto.categoryId?.name || 'Sin categoría'
+        categoriaNombre: producto.categoryId?.name || 'Sin categoría',
+        marca: producto.marca || '',
+        tipo: producto.tipo || '',
       };
     });
-
   } catch (error) {
     $q.notify({ type: 'negative', message: 'Error al cargar productos' });
   }
 };
 
 
-const handleFileChange = (event) => {
-  const files = event.target.files;
-  if (files.length <= 4) {
-    images.value = Array.from(files);  // Imágenes nuevas
-    imagePreviews.value = Array.from(files).map(file => URL.createObjectURL(file));
-  } else {
-    $q.notify({ type: 'negative', message: 'Máximo 4 imágenes permitidas.' });
-  }
-};
+
 
 const handleEditProduct = async () => {
   loading.value = true;
   try {
     const formData = new FormData();
     formData.append('nombre', productToEdit.value.nombre);
+    formData.append('marca', productToEdit.value.marca);
+    formData.append('tipo', productToEdit.value.tipo);
     formData.append('descripcion', productToEdit.value.descripcion);
     formData.append('price', productToEdit.value.price);
     formData.append('categoryId', productToEdit.value.categoryId);
     formData.append('stock', productToEdit.value.stock);
-
     // Agregar imágenes existentes que el usuario desea mantener
     const existingUrls = editImagePreviews.value.filter(url =>
       typeof url === 'string' && url.startsWith('http')
@@ -326,6 +331,8 @@ const handleAddProduct = async () => {
   try {
     const formData = new FormData();
     formData.append('nombre', productName.value);
+    formData.append('marca', productMarca.value);       // string o ID
+    formData.append('tipo', productTipo.value);         // string o ID
     formData.append('descripcion', productDescription.value);
     formData.append('price', productPrice.value);
     formData.append('categoryId', categoryId.value);
@@ -394,9 +401,13 @@ function handleSingleFileChange(event, index) {
   reader.onload = (e) => {
     imagePreviews.value[index] = e.target.result;
     imageNames.value[index] = file.name;
+
+    // Añade o reemplaza la imagen en el array de archivos reales
+    images.value[index] = file;
   };
   reader.readAsDataURL(file);
 }
+
 
 
 const handleSingleEditFileChange = (event, index) => {
