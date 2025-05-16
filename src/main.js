@@ -25,6 +25,9 @@ const myApp = createApp(App)
 const pinia = createPinia()
 
 
+pinia.use(piniaPluginPersistedstate)
+myApp.use(pinia)
+myApp.use(router) 
 myApp.use(Quasar, {
   plugins: {
     Notify, 
@@ -32,9 +35,4 @@ myApp.use(Quasar, {
   },
 });
 
-
-pinia.use(piniaPluginPersistedstate)
-myApp.use(pinia)
-myApp.use(router) 
 myApp.mount('#app')
-

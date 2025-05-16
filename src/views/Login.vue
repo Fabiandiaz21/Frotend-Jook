@@ -115,15 +115,12 @@ const login = async () => {
     });
 
     if (response && response.token) {
+      console.log("token en login" , response.token)
       Store.setToken(response.token);
 
       if (response.user) {
         Store.setUser(response.user);
-
-        // Guardar el rol en localStorage
         localStorage.setItem('userRole', response.user.role);
-
-        // Verificar si el rol es 'admin'
         if (response.user.role === 'admin') {
           Store.setUserRole(response.user.role);
           $q.notify({
@@ -131,11 +128,8 @@ const login = async () => {
             message: 'Inicio de sesión exitoso',
             position: 'top'
           });
-
-          // Redirigir a la vista de agregar productos
-          router.replace('/admin/Agregar'); // Aquí va la ruta de agregar productos
+          router.replace('/admin/Agregar');
         } else {
-          // Redirigir a la vista normal para clientes o vendedores
           router.replace('/inicio');
         }
       }

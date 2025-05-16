@@ -12,12 +12,7 @@
         </q-toolbar-title>
 
         <!-- Tabs centrados -->
-        <q-tabs
-          align="center"
-          class="bg-brown text-white q-mx-auto"
-          active-color="amber-4"
-          indicator-color="amber-4"
-        >
+        <q-tabs align="center" class="bg-brown text-white q-mx-auto" active-color="amber-4" indicator-color="amber-4">
           <q-route-tab to="/admin/Agregar" label="Agregar Productos" />
           <q-route-tab to="/admin/categoria" label="Categorías" />
           <q-route-tab to="/admin/Usuarios" label="Usuarios" />
@@ -66,6 +61,6 @@ const logout = () => {
 
 <style scoped>
 .custom-header {
-  background-color: #6d4c41; /* Color café oscuro si no usas bg-brown de Quasar */
+  background-color: #6d4c41;
 }
 </style>

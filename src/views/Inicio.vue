@@ -2,33 +2,6 @@
   <div class="container">
     <!-- Barra de navegación superior -->
     <nav class="main-nav">
-      <div class="nav-brand"></div>
-      <div class="search-bar">
-        <input type="text" placeholder="Buscar productos..." v-model="searchQuery" />
-        <button @click="handleSearch">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path
-              d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-          </svg>
-          Buscar
-        </button>
-      </div>
-      <div class="nav-actions">
-        <button class="nav-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path
-              d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4h-3.5z" />
-          </svg>
-          Carrito
-        </button>
-        <button class="nav-button">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path
-              d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
-          </svg>
-          Mi cuenta
-        </button>
-      </div>
     </nav>
 
     <!-- Hero Slider -->
@@ -270,19 +243,32 @@ const handleSearch = () => {
 <style scoped>
 /* Variables de color */
 :root {
-  --primary-dark: #3E2723;    /* Café oscuro */
-  --primary-medium: #5D4037;  /* Café medio */
-  --primary-light: #8D6E63;   /* Café claro */
-  --secondary-dark: #6D4C41;  /* Café secundario oscuro */
-  --secondary-light: #D7CCC8; /* Café claro claro */
-  --accent-color: #A1887F;    /* Café acento */
-  --light-bg: #EFEBE9;        /* Fondo café muy claro */
-  --dark-text: #3E2723;       /* Texto café oscuro */
-  --light-text: #FFFFFF;      /* Texto blanco */
-  --gray-text: #795548;       /* Texto gris café */
-  --border-color: #BCAAA4;    /* Borde café claro */
-  --success-color: #689F38;   /* Verde para contrastar */
-  --discount-color: #D32F2F;  /* Rojo para ofertas */
+  --primary-dark: #3E2723;
+  /* Café oscuro */
+  --primary-medium: #5D4037;
+  /* Café medio */
+  --primary-light: #8D6E63;
+  /* Café claro */
+  --secondary-dark: #6D4C41;
+  /* Café secundario oscuro */
+  --secondary-light: #D7CCC8;
+  /* Café claro claro */
+  --accent-color: #A1887F;
+  /* Café acento */
+  --light-bg: #EFEBE9;
+  /* Fondo café muy claro */
+  --dark-text: #3E2723;
+  /* Texto café oscuro */
+  --light-text: #FFFFFF;
+  /* Texto blanco */
+  --gray-text: #795548;
+  /* Texto gris café */
+  --border-color: #BCAAA4;
+  /* Borde café claro */
+  --success-color: #689F38;
+  /* Verde para contrastar */
+  --discount-color: #D32F2F;
+  /* Rojo para ofertas */
 }
 
 /* Reset y estilos base */
@@ -317,7 +303,7 @@ body {
   top: 0;
   z-index: 1000;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  
+
 }
 
 .nav-brand {

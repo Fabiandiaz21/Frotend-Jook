@@ -1,42 +1,63 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import {jwtDecode} from 'jwt-decode'
+
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref('');
+  const token = ref(null);
   const user = ref(null);
-  const isAuthenticated = ref(false);
-  const userRole = ref('');
+  const userRole = ref(null);
+  const userID = ref()
+  
+  const setToken = (newToken) => {
+    token.value = newToken;
+    const tokenDecoded = jwtDecode(String(newToken))
+    userID.value = tokenDecoded.uid
+    console.log("id de usuario en store" , userID.value)
 
-  function setToken(newToken) {
-    token.value = newToken || '';
-    isAuthenticated.value = !!newToken;
-  }
 
-  function setUser(newUser) {
+
+  };
+
+  const setUser = (newUser) => {
     user.value = newUser;
-  }
+  };
 
-  function setUserRole(role) {
+  const setUserRole = (role) => {
     userRole.value = role;
-  }
+  };
 
-  function logout() {
-    token.value = '';
+  const clearAuth = () => {
+    token.value = null;
     user.value = null;
-    userRole.value = '';
-    isAuthenticated.value = false;
-  }
+    userRole.value = null;
+  };
+
+  const isLoggedIn = () => {
+    return !!token.value;
+  };
 
   return {
     token,
     user,
-    isAuthenticated,
+    userID,
     userRole,
     setToken,
     setUser,
     setUserRole,
-    logout
+    clearAuth,
+    isLoggedIn,
   };
-}, {
-  persist: true
+}, { // Configuración de persistencia
+  persist: {
+    enabled: true, // Habilita la persistencia para este store
+    strategies: [
+      {
+        key: 'auth', // Clave para identificar los datos en el storage
+        storage: localStorage, // Puedes usar localStorage o sessionStorage
+        // Opcional: Puedes especificar qué estados quieres persistir.  Si no se especifica, todos se guardan.
+        paths: ['token', 'user', 'userRole']
+      },
+    ],
+  },
 });

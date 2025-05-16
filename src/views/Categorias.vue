@@ -1,43 +1,27 @@
 <template>
   <div class="q-pa-md">
-    <q-table
-      title="Categorías"
-      :rows="categories"
-      :columns="columns"
-      row-key="name"
-      flat
-      bordered
-    >
+    <q-table title="Categorías" :rows="categories" :columns="columns" row-key="name" flat bordered>
 
       <!-- Botones de acción -->
       <template v-slot:body-cell-acciones="props">
         <q-td align="center">
           <div class="row no-wrap justify-center q-gutter-xs">
-            <q-btn icon="edit" color="primary" dense size="sm" flat @click="openEditDialog(props.row)" class="q-px-xs" />
-            <q-btn
-              :icon="props.row.estado === 'activo' ? 'cancel' : 'check'"
-              :color="props.row.estado === 'activo' ? 'negative' : 'positive'"
-              dense size="sm" flat
-              @click="cambiarEstado(props.row)"
-              class="q-px-xs"
-            />
+            <q-btn icon="edit" color="primary" dense size="sm" flat @click="openEditDialog(props.row)"
+              class="q-px-xs" />
+            <q-btn :icon="props.row.estado === 'activo' ? 'cancel' : 'check'"
+              :color="props.row.estado === 'activo' ? 'negative' : 'positive'" dense size="sm" flat
+              @click="cambiarEstado(props.row)" class="q-px-xs" />
           </div>
         </q-td>
       </template>
     </q-table>
 
     <!-- Botón flotante -->
-    <q-btn
-      fab
-      icon="add"
-      color="primary"
-      class="q-fab-bottom-right q-ma-md"
-      @click="openAddDialog"
-    />
+    <q-btn fab icon="add" color="primary" class="q-fab-bottom-right q-ma-md" @click="openAddDialog" />
 
     <!-- Diálogo para agregar/editar -->
     <q-dialog v-model="dialog">
-      <q-card>
+      <q-card style="min-width: 500px; max-width: 90vw" >
         <q-card-section>
           <div class="text-h6">{{ isEditing ? 'Editar' : 'Agregar' }} Categoría</div>
         </q-card-section>
@@ -75,10 +59,10 @@ const form = ref({
 })
 
 const columns = [
-  { name: 'name', label: 'Nombre', field: 'name', sortable: true, align: 'center'  },
-  { name: 'description', label: 'Descripción', field: 'description', align: 'center'  },
-  { name: 'createdAt', label: 'Fecha de creación', field: row => new Date(row.createdAt).toLocaleDateString(), sortable: true, align: 'center'  },
-  { name: 'acciones', label: 'Acciones', field: 'acciones', sortable: false,align: 'center'  }
+  { name: 'name', label: 'Nombre', field: 'name', sortable: true, align: 'center' },
+  { name: 'description', label: 'Descripción', field: 'description', align: 'center' },
+  { name: 'createdAt', label: 'Fecha de creación', field: row => new Date(row.createdAt).toLocaleDateString(), sortable: true, align: 'center' },
+  { name: 'acciones', label: 'Acciones', field: 'acciones', sortable: false, align: 'center' }
 ]
 
 const fetchCategories = async () => {
