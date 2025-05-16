@@ -62,6 +62,5 @@ const logout = () => {
 <style scoped>
 .custom-header {
   background-color: #6d4c41;
-  /* Color café oscuro si no usas bg-brown de Quasar */
 }
 </style>
