@@ -964,7 +964,7 @@ body {
   .slide-content h1 {
     font-size: 1.5rem;
   }
-
+ 
   .cta-button,
   .service-button {
     padding: 0.5rem 1rem;
