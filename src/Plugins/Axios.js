@@ -1,8 +1,8 @@
 import Axios from 'axios';
 
 const apiClient = Axios.create({
-    baseURL: 'http://localhost:3200/api',
-     //baseURL: 'https://backend-jook.onrender.com/api',
+    //baseURL: 'http://localhost:3200/api',
+     baseURL: 'https://backend-jook.onrender.com/api',
     headers: {
         // Inicializar con un objeto vacío, y añadir el token dentro del interceptor
         "Authorization": ""
