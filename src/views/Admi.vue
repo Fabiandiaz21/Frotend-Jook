@@ -13,9 +13,9 @@
 
         <!-- Tabs centrados -->
         <q-tabs align="center" class="bg-brown text-white q-mx-auto" active-color="amber-4" indicator-color="amber-4">
-          <q-route-tab to="/admin/Agregar" label="Agregar Productos" />
-          <q-route-tab to="/admin/categoria" label="Categorías" />
-          <q-route-tab to="/admin/Usuarios" label="Usuarios" />
+          <q-route-tab to="/agregar" label="Agregar Productos" />
+          <q-route-tab to="/categoria" label="Categorías" />
+          <q-route-tab to="/Usuarios" label="Usuarios" />
         </q-tabs>
 
         <!-- Menú del usuario admin -->

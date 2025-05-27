@@ -1,54 +1,29 @@
 <template>
   <div class="page-wrapper">
-    <!-- Búsqueda -->
-    <div class="search-bar">
-      <div class="search-input-wrapper">
-        <span class="search-icon">🔍</span>
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Buscar tu casco ideal..."
-        />
+
+    <div class="filter-bar">
+      <div v-for="filterGroup in filterOptions" :key="filterGroup.label" class="filter-select">
+        <label :for="filterGroup.label">{{ filterGroup.label }}</label>
+        <select :id="filterGroup.label" v-model="selectedFilters[filterGroup.label]" @change="applyFilters">
+          <option value="">Todos</option>
+          <option v-for="option in filterGroup.options" :key="option" :value="option">
+            {{ option }}
+          </option>
+        </select>
       </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="filter-bar">
-      <button
-        v-for="filter in filters"
-        :key="filter"
-        class="filter-btn"
-        @click="handleFilter(filter)"
-      >
-        {{ filter }}
-      </button>
-    </div>
-
-    <!-- Carruseles -->
-    <div
-      v-for="(carousel, index) in carouselsData"
-      :key="index"
-      class="carousel-container"
-    >
+    <div v-for="(carousel, index) in carouselsData" :key="index" class="carousel-container">
       <div class="carousel">
-        <!-- Botón izquierdo -->
-        <button
-          class="carousel-btn left"
-          @click="moveCarousel(index, 'left')"
-        >
+        <button class="carousel-btn left" @click="moveCarousel(index, 'left')">
           &#9664;
         </button>
-        
-        <!-- Carrusel -->
-        <div
-          class="carousel-items"
-          :style="{ transform: 'translateX(' + carouselPositions[index] + 'px)' }"
-          ref="carousels"
-        >
+
+        <div class="carousel-items" :style="{ transform: 'translateX(' + carouselPositions[index] + 'px)' }"
+          ref="carousels">
           <div class="carousel-item" v-for="(item, i) in carousel" :key="i">
-            <!-- Enlace alrededor de la imagen -->
             <a :href="item.url" target="_blank">
-              <img :src="item.img" alt="Producto" class="product-img" />
+              <img :src="item.img" alt="Producto" class="product-img imagen-problematica" style="width: 180px; height: 180px;">
             </a>
             <div class="product-info">
               <p class="price">{{ item.price }}</p>
@@ -58,206 +33,191 @@
           </div>
         </div>
 
-        <!-- Botón derecho -->
-        <button
-          class="carousel-btn right"
-          @click="moveCarousel(index, 'right')"
-        >
+        <button class="carousel-btn right" @click="moveCarousel(index, 'right')">
           &#9654;
         </button>
+      </div>
+    </div>
+
+    <div class="all-products-container">
+      <h2>Todos los Productos</h2>
+      <div class="product-grid">
+        <div v-for="product in products" :key="product._id" class="product-card">
+          <a :href="`/product/${product._id}`" target="_blank">
+            <img :src="product.images?.[0] || 'https://via.placeholder.com/200'" alt="Producto" class="product-img">
+          </a>
+          <div class="product-info">
+            <p class="price">{{ `$${product.price}` }}</p>
+            <p class="desc">{{ product.nombre }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue';
+import { getData } from '../Services/jook.js'; // tu función para hacer GET
 
-// Para las búsquedas y filtros
-const search = ref('')
-const filters = [
-  'Filtros',
-  'Ordenar por: Destacados',
-  'Categoría',
-  'Marca',
-  'Precio',
-  'Tipo de uso'
-]
+const search = ref('');
+const selectedFilters = ref({}); // Objeto para almacenar los filtros seleccionados
+const filterOptions = ref([
+  { label: 'Ordenar por', options: ['Destacados', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'] },
+  { label: 'Categoría', options: [] }, // Se llenará dinámicamente
+  { label: 'Marca', options: [] },    // Se llenará dinámicamente
+  { label: 'Precio', options: ['Menos de $50', '$50 - $100', 'Más de $100'] },
+  { label: 'Tipo de uso', options: [] }  // Se llenará dinámicamente
+]);
 
-// Lista de productos con precios, descripciones, descuentos, URLs e imágenes organizadas
-const sampleProducts = [
-  {
-    price: '$1,206.91',
-    desc: 'MacBook 13 Air',
-    discount: '10% Descuento',
-    url: 'https://www.amazon.com/dp/B08V8MQW7G',
-    img: 'https://m.media-amazon.com/images/I/61WYHkstl9L.AC_SL1500.jpg'
-  },
-  {
-    price: '$80.00',
-    desc: 'Zapatos deportivos',
-    discount: '15% Descuento',
-    url: 'https://www.asics.com/',
-    img: 'https://asicsco.vteximg.com.br/arquivos/ids/368811-700-700/1011B548_005_SR_RT_GLB.jpg?v=638422112086670000'
-  },
-  {
-    price: '$1,150.75',
-    desc: 'Airpods 2 Pro',
-    discount: '5% Descuento',
-    url: 'https://www.apple.com/airpods-2-pro',
-    img: 'https://co.tiendasishop.com/cdn/shop/files/IMG-14912675.jpg?v=1726874179&width=1000'
-  },
-  {
-    price: '$999.00',
-    desc: 'Auriculares Bluetooth',
-    discount: '20% Descuento',
-    url: 'https://www.apple.com/airpods-max',
-    img: 'https://onlinebusiness.com.co/wp-content/uploads/2018/08/apple_mgyn3am_a_airpods_max_green.jpeg'
-  },
-  {
-    price: '$2,999.99',
-    desc: 'Laptop ultradelgada',
-    discount: '30% Descuento',
-    url: 'https://www.amazon.com/dp/B08V8MQW7G',
-    img: 'https://m.media-amazon.com/images/I/71SeB+qG0qL.jpg'
-  },
-  {
-    price: '$1,699.99',
-    desc: 'iPhone 11',
-    discount: '15% Descuento',
-    url: 'https://www.apple.com/iphone-11',
-    img: 'https://tienda.movistar.com.co/media/catalog/product/cache/ebd1de6550e0d0b8d8c505e2a09b56c4/i/p/iphone11morado01.jpg?v=638422112086670000'
-  },
-  {
-    price: '$2,299.99',
-    desc: 'Smartwatch Garmin',
-    discount: '5% Descuento',
-    url: 'https://www.garmin.com/',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_959477-CBT75867871299_042024-O.webp'
-  },
-  {
-    price: '$399.99',
-    desc: 'Auriculares Bose QuietComfort',
-    discount: '25% Descuento',
-    url: 'https://www.bose.com/en_us/products/headphones.html',
-    img: 'https://assets.bose.com/content/dam/cloudassets/Bose_DAM/Web/consumer_electronics/global/products/headphones/qcue-headphonein/product_silo_images/AEM_PDP_GALLERY_BLACK-8.jpg/jcr:content/renditions/cq5dam.web.1920.1920.jpeg'
-  },
-  {
-    price: '$1,799.00',
-    desc: 'PNY GEFORCE RTX 5090',
-    discount: '10% Descuento',
-    url: 'https://www.pny.com/',
-    img: 'https://media.ldlc.com/r1600/ld/products/00/06/20/52/LD0006205272.jpg'
-  },
-  {
-    price: '$1,099.99',
-    desc: 'Silla Ejecutiva Gerencial Magnux Ergonómica',
-    discount: '15% Descuento',
-    url: 'https://www.magnux.com/sillas-ejecutivas',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_809846-MLU74085660355_012024-O.webp'
-  },
-  {
-    price: '$2,549.900.99',
-    desc: 'Consola Playstation 5 Slim Disco 1tb Con Juego Fisico Fc 25',
-    discount: '20% Descuento',
-    url: 'https://www.playstation.com/',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_747798-MCO79545904923_092024-O.webp'
-  },
-  {
-    price: '$1,400.556.00',
-    desc: 'GoPro Hero 9 Black',
-    discount: '10% Descuento',
-    url: 'https://gopro.com/',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_843539-CBT81549071194_012025-O.webp'
-  },
-  {
-    price: '$3,249.900.00',
-    desc: 'Consola Microsoft Xbox Series X Digital 1tb Color Blanco',
-    discount: '15% Descuento',
-    url: 'https://www.microsoft.com/xbox',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_640569-MLA80427179894_112024-O.webp'
-  },
-  {
-    price: '$1,999.99',
-    desc: 'MacBook Pro 16"',
-    discount: '10% Descuento',
-    url: 'https://www.apple.com/macbook-pro-16',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_778821-MLA73281234734_122023-O.webp'
-  },
-  {
-    price: '$750.00',
-    desc: 'Smartwatch Apple Watch Series 6',
-    discount: '5% Descuento',
-    url: 'https://www.apple.com/apple-watch-series-6',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_2X_816100-MLA72067667918_102023-F.webp'
-  },
-  {
-    price: '$499.99',
-    desc: 'Pc Gamer Amd Ryzen 5 7500f Rtx 4060 Ti 8gb Ram 32gb M.2 1tb',
-    discount: '20% Descuento',
-    url: 'https://www.dell.com',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_671556-MCO83438027532_042025-O.webp'
-  },
-  {
-    price: '$2,090.00',
-    desc: 'Nintendo Switch Oled 64gb Standard',
-    discount: '10% Descuento',
-    url: 'https://www.nintendo.com',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_845205-MLA70414548864_072023-O.webp'
-  },
-  {
-    price: '$4,000.00',
-    desc: 'Tablet Lenovo Smart 10.4 128gb',
-    discount: '10% Descuento',
-    url: 'https://www.lenovo.com',
-    img: 'https://http2.mlstatic.com/D_NQ_NP_851136-MLA82169043662_022025-O.webp'
-  },
-]
+const products = ref([]); // Aquí se almacenarán todos los productos O los productos filtrados
+const carouselsData = ref([]);
+const carouselPositions = ref([]);
+const itemWidth = 200;
 
-const carouselsData = ref(
-  Array.from({ length: 6 }, () =>
-    Array.from({ length: 12 }, () => {
-      const randomProduct = sampleProducts[Math.floor(Math.random() * sampleProducts.length)]
-      return {
-        ...randomProduct,
-        img: randomProduct.img
-      }
-    })
-  )
-)
+// Función para obtener y procesar las opciones de los filtros
+async function fetchFilterOptions() {
+  try {
+    const allProducts = await getData('/producto?estado=activo'); // Obtener todos los productos activos
 
-const carouselPositions = ref(Array(carouselsData.value.length).fill(0))
-const itemWidth = 200 // ancho estimado del item + gap
+    // Obtener opciones únicas para Categoría (usando categoryId)
+    const categories = [...new Set(allProducts.map(p => p.categoryId).filter(Boolean))];
+    const categoriaFilter = filterOptions.value.find(f => f.label === 'Categoría');
+    if (categoriaFilter) {
+      categoriaFilter.options = categories.map(id => String(id)); // Convertir ObjectId a String para el value del select
+    }
 
-onMounted(() => {
-  carouselsData.value.forEach((carousel, index) => {
-    setInterval(() => {
-      moveCarousel(index, 'right')
-    }, 4000)
-  })
-})
+    // Obtener opciones únicas para Marca (se mantiene igual)
+    const marcas = [...new Set(allProducts.map(p => p.marca).filter(Boolean))];
+    const marcaFilter = filterOptions.value.find(f => f.label === 'Marca');
+    if (marcaFilter) {
+      marcaFilter.options = marcas;
+    }
 
-// Función para mover el carrusel manualmente
-function moveCarousel(index, direction) {
-  const maxScroll = carouselsData.value[index].length * itemWidth - window.innerWidth
-  if (direction === 'right') {
-    carouselPositions.value[index] = (carouselPositions.value[index] - itemWidth) % (maxScroll + itemWidth)
-  } else {
-    carouselPositions.value[index] = (carouselPositions.value[index] + itemWidth) % (maxScroll + itemWidth)
+    // Obtener opciones únicas para Tipo de uso (usando tipo)
+    const tiposUso = [...new Set(allProducts.map(p => p.tipo).filter(Boolean))];
+    const tipoUsoFilter = filterOptions.value.find(f => f.label === 'Tipo de uso');
+    if (tipoUsoFilter) {
+      tipoUsoFilter.options = tiposUso;
+    }
+
+  } catch (error) {
+    console.error('Error al obtener las opciones de los filtros:', error);
   }
 }
 
-// Para debug de búsqueda y filtros
-watch(search, (val) => {
-  console.log('Buscando:', val)
-})
+// Función para obtener productos con filtros
+async function fetchFilteredProducts() {
+  console.log('fetchFilteredProducts ejecutado', selectedFilters.value, search.value);
+  try {
+    // Construimos query params basados en los filtros seleccionados
+    const params = new URLSearchParams();
+    if (search.value) params.append('nombre', search.value);
 
-function handleFilter(filter) {
-  console.log('Filtro seleccionado:', filter)
+    for (const key in selectedFilters.value) {
+      if (selectedFilters.value[key]) {
+        if (key === 'Marca') params.append('marca', selectedFilters.value[key]);
+        if (key === 'Categoría') params.append('categoryId', selectedFilters.value[key]); // Usamos categoryId
+        if (key === 'Tipo de uso') params.append('tipo', selectedFilters.value[key]);      // Usamos tipo
+        if (key === 'Ordenar por') {
+          if (selectedFilters.value[key] === 'Precio: Menor a Mayor') {
+            params.append('sortBy', 'price');
+            params.append('sortOrder', 'asc');
+          } else if (selectedFilters.value[key] === 'Precio: Mayor a Menor') {
+            params.append('sortBy', 'price');
+            params.append('sortOrder', 'desc');
+          }
+          // 'Destacados' podría no requerir parámetros o depender de tu lógica
+        }
+        if (key === 'Precio') {
+          const precioSeleccionado = selectedFilters.value[key];
+          if (precioSeleccionado === 'Menos de $50') {
+            params.append('precio_lte', 50);
+          } else if (precioSeleccionado === '$50 - $100') {
+            params.append('precio_gte', 50);
+            params.append('precio_lte', 100);
+          } else if (precioSeleccionado === 'Más de $100') {
+            params.append('precio_gte', 100);
+          }
+        }
+      }
+    }
+
+    const url = `/producto?${params.toString()}`;
+    const data = await getData(url);
+
+    // Filtramos activos y actualizamos la lista de productos
+    const activos = data.filter(product => product.estado === 'activo');
+    console.log('Productos obtenidos:', activos);
+    const oldProducts = [...products.value]; // Crea una copia del array anterior
+    products.value = []; // Vacía el array
+    nextTick(() => {
+      products.value = activos; // Asigna el nuevo array
+    });
+    generateCarousels(activos); // También actualizamos los carruseles con los productos filtrados
+  } catch (error) {
+    console.error('Error al obtener los productos filtrados:', error);
+  }
+}
+
+onMounted(async () => {
+  await fetchFilterOptions(); // Obtener las opciones de los filtros al montar
+  await fetchFilteredProducts(); // Obtener todos los productos activos inicialmente para la lista
+  // generateCarousels(products.value); // Los carruseles se generan con los productos filtrados
+
+  // Animación automática (se mantiene igual)
+  carouselsData.value.forEach((_, index) => {
+    setInterval(() => {
+      moveCarousel(index, 'right');
+    }, 4000);
+  });
+});
+
+// Actualizar productos cuando cambie search o los filtros seleccionados
+watch([search, selectedFilters], () => {
+  fetchFilteredProducts();
+}, { deep: true }); // Importante el deep: true para observar cambios dentro del objeto selectedFilters
+
+function generateCarousels(productList) {
+  const numberOfCarousels = 6;
+  const itemsPerCarousel = 12;
+
+  carouselsData.value = Array.from({ length: numberOfCarousels }, () =>
+    Array.from({ length: itemsPerCarousel }, () => {
+      const index = Math.floor(Math.random() * productList.length);
+      const p = productList[index];
+
+      return {
+        id: p._id,
+        price: `$${p.price}`,
+        desc: p.nombre,
+        discount: '',
+        url: `/product/${p._id}`,
+        img: p.images?.[0] || 'https://via.placeholder.com/200',
+      };
+    })
+  );
+
+  carouselPositions.value = Array(carouselsData.value.length).fill(0);
+}
+
+function moveCarousel(index, direction) {
+  const maxScroll = carouselsData.value[index].length * itemWidth - window.innerWidth;
+  if (direction === 'right') {
+    carouselPositions.value[index] = (carouselPositions.value[index] - itemWidth) % (maxScroll + itemWidth);
+  } else {
+    carouselPositions.value[index] = (carouselPositions.value[index] + itemWidth) % (maxScroll + itemWidth);
+  }
+}
+
+// Nueva función para aplicar los filtros
+function applyFilters() {
+  fetchFilteredProducts();
 }
 </script>
 
-<style scoped>
+<style>
+/* Estilos generales */
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
@@ -317,7 +277,19 @@ body {
   justify-content: center;
 }
 
-.filter-btn {
+.filter-select {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px;
+}
+
+.filter-select label {
+  font-weight: 500;
+  margin-bottom: 5px;
+  color: #374151;
+}
+
+.filter-select select {
   background-color: #f3f4f6;
   color: #374151;
   padding: 10px 18px;
@@ -327,9 +299,15 @@ body {
   border: 1px solid transparent;
   transition: all 0.2s ease;
   cursor: pointer;
+  appearance: none; /* Para quitar estilos por defecto del navegador */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor' class='w-6 h-6'%3E%3Cpath fill-rule='evenodd' d='M11.47 17.7a.75.75 0 01-1.06 0l-7.5-7.5a.75.75 0 111.06-1.06L12 15.94l6.97-7.01a.75.75 0 111.06 1.06l-7.5 7.5z' clip-rule='evenodd' /%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 1.5em 1.5em;
+  padding-right: 30px; /* Espacio para la flecha */
 }
 
-.filter-btn:hover {
+.filter-select select:hover {
   background-color: #e5e7eb;
   border-color: #d1d5db;
 }
@@ -338,6 +316,8 @@ body {
 .carousel-container {
   background: white;
   padding: 20px;
+  margin: 0 auto;
+  max-width: 1200px;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
   border-radius: 12px;
   overflow: hidden;
@@ -348,35 +328,64 @@ body {
   overflow: hidden;
   position: relative;
   width: 100%;
-  height: 300px;
+  height: auto;
   background-color: white;
 }
 
 .carousel-items {
   display: flex;
   transition: transform 1s ease-in-out;
+  padding-bottom: 10px;
 }
 
 .carousel-item {
-  flex: 0 0 200px; /* Ancho del item */
-  margin-right: 15px;
+  flex: 0 0 180px; /* Ancho fijo */
+  height: 180px;    /* Alto fijo */
+  margin: 0 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  overflow: hidden; /* Evita que la imagen se salga */
+  border-radius: 8px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Imagen dentro del carousel-item */
+.carousel-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Ajusta la imagen manteniendo proporción sin recortar */
+  display: block;
+  border-radius: 8px;
+  transition: object-fit 0.3s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .carousel-item {
+    flex: 0 0 140px;
+    margin: 0 6px;
+    height: 140px;
+  }
+
+  .carousel-item img {
+    max-width: 100%;
+    max-height: 100%;
+  }
 }
 
 .carousel-btn {
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.4);
   color: white;
   border: none;
-  padding: 10px;
-  font-size: 24px;
+  padding: 8px;
+  font-size: 20px;
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 10;
   cursor: pointer;
+  border-radius: 50%;
 }
 
 .carousel-btn.left {
@@ -387,30 +396,64 @@ body {
   right: 10px;
 }
 
-/* Imagen */
-.product-img {
-  width: 100%;
-  height: 180px; /* Ajustamos la altura */
-  object-fit: cover;
-  border-radius: 8px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilo de los productos */
-.product-info {
+/* Texto info dentro del carousel */
+.carousel-item .product-info {
   font-size: 12px;
   color: #333;
   line-height: 1.4;
 }
 
-.price {
+.carousel-item .price {
   font-weight: bold;
   color: #d0021b;
-  font-size: 14px;
 }
 
-.discount {
-  color: #f90;
-  font-size: 12px;
+/* Estilos para la sección de todos los productos */
+.all-products-container {
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 1200px;
+  background-color: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
 }
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Columnas responsivas */
+  gap: 20px;
+  padding: 20px;
+}
+
+.product-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  transition: transform 0.3s ease-in-out;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 7px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* Imagen de producto en la grilla general */
+.product-card .product-img {
+  width: 100%;
+  height: 200px; /* Tamaño fijo para imágenes en la grilla */
+  object-fit: contain; /* Ajusta la imagen sin recortar */
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: object-fit 0.3s ease-in-out;
+}
+
+/* Control de calidad al escalar */
+.product-img {
+  image-rendering: optimizeQuality;
+}
+
 </style>

@@ -1,22 +1,18 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import {jwtDecode} from 'jwt-decode'
-
+import { jwtDecode } from 'jwt-decode';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(null);
   const user = ref(null);
   const userRole = ref(null);
-  const userID = ref()
-  
+  const userID = ref();
+
   const setToken = (newToken) => {
     token.value = newToken;
-    const tokenDecoded = jwtDecode(String(newToken))
-    userID.value = tokenDecoded.uid
-    console.log("id de usuario en store" , userID.value)
-
-
-
+    const tokenDecoded = jwtDecode(String(newToken));
+    userID.value = tokenDecoded.uid;
+    console.log('id de usuario en store', userID.value);
   };
 
   const setUser = (newUser) => {
@@ -31,6 +27,8 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null;
     user.value = null;
     userRole.value = null;
+    // Elimina los datos persistidos por pinia-plugin-persist
+    localStorage.removeItem('auth'); // 'auth' es la clave que definiste en persist.strategies.key
   };
 
   const isLoggedIn = () => {
@@ -48,15 +46,14 @@ export const useAuthStore = defineStore('auth', () => {
     clearAuth,
     isLoggedIn,
   };
-}, { // Configuración de persistencia
+}, {
   persist: {
-    enabled: true, // Habilita la persistencia para este store
+    enabled: true,
     strategies: [
       {
-        key: 'auth', // Clave para identificar los datos en el storage
-        storage: localStorage, // Puedes usar localStorage o sessionStorage
-        // Opcional: Puedes especificar qué estados quieres persistir.  Si no se especifica, todos se guardan.
-        paths: ['token', 'user', 'userRole']
+        key: 'auth',
+        storage: localStorage,
+        paths: ['token', 'user', 'userRole'],
       },
     ],
   },

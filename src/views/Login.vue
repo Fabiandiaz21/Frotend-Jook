@@ -128,9 +128,9 @@ const login = async () => {
             message: 'Inicio de sesión exitoso',
             position: 'top'
           });
-          router.replace('/admin/Agregar');
+          router.replace('/agregar');
         } else {
-          router.replace('/inicio');
+          router.replace('/perfil');
         }
       }
     }
