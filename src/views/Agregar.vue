@@ -295,7 +295,7 @@ const handleEditProduct = async () => {
       formData.append('images', file);
     });
 
-    const updatedProduct = await putData(`/producto/${productToEdit.value._id}`, formData, {
+    const updatedProduct = await putData(`/producto/id/${productToEdit.value._id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
 
@@ -339,7 +339,7 @@ const handleAddProduct = async () => {
     formData.append('stock', productStock.value);
 
     // Agregar imágenes
-    images.value.forEach(img => formData.append('images', img));  // Asegúrate de que 'images' sea un array de archivos
+    images.value.forEach(img => formData.append('images', img));  
 
     const newProduct = await postData('/producto', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

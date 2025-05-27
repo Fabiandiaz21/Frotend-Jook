@@ -11,7 +11,9 @@ import Usuarios from '../views/Usuarios.vue';
 import Vistap from '../views/Vistap.vue';
 import Favoritos from '../views/Favoritos.vue';
 import VistaCategoria from '../views/VistaCategoria.vue';
-import { useAuthStore } from '../Store/useAunt'; // Importa tu store de autenticación
+import VistaMarca from '../views/VistaMarca.vue';
+import Carrito from '../views/Carrito.vue';
+import { useAuthStore } from '../Store/useAunt'; 
 
 const routes = [
   {
@@ -24,6 +26,8 @@ const routes = [
       { path: '/vistap/:id', component: Vistap, name: 'vistap', props: true }, 
       { path: '/favoritos', component: Favoritos, name: 'favoritos'}, 
       { path: '/vistacategoria/:id', component: VistaCategoria, name: 'vistacategoria'}, 
+      { path: '/vistamarca/:id', component: VistaMarca, name: 'vistamarca'}, 
+      { path: '/carrito/', component: Carrito, name: 'carrito'}, 
     ],
   },
   {

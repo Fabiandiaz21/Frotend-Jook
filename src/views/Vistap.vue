@@ -30,7 +30,8 @@
         <p>Disponibles: {{ product.stock }} unidades</p>
         <p v-if="product.marca">Marca: {{ product.marca }}</p>
         <p v-if="product.tipo">Tipo: {{ product.tipo }}</p>
-        <button class="boton-carrito" v-if="product.estado === 'activo'">Añadir al carrito</button>
+        <button class="boton-carrito" v-if="product.estado === 'activo'" @click="agregarAlCarrito">Añadir al
+          carrito</button>
         <button class="boton-carrito" v-else disabled>Producto inactivo</button>
         <button v-if="authStore.token" class="boton-favorito" :class="{ favorito: esFavorito }" @click="toggleFavorito">
           <q-icon :name="esFavorito ? 'favorite' : 'favorite_border'" />
@@ -114,12 +115,15 @@
 import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { getData, postData, deleteData } from '../services/jook';
-import { useAuthStore } from '../Store/useAunt'; // Asegúrate de importar el store
-import { useQuasar } from 'quasar'; // Importa el hook de Quasar
+import { useAuthStore } from '../Store/useAunt';
+import { useCartStore } from '../Store/useCartStore';
+import { useQuasar } from 'quasar';
 
 const route = useRoute();
 const productId = ref(route.params.id);
 
+const cartStore = useCartStore();
+const cantidadSeleccionada = ref(1);
 const product = ref(null);
 const loading = ref(true);
 const error = ref(null);
@@ -342,6 +346,63 @@ const promedioCalificaciones = computed(() => {
   const total = product.value.reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
   return (total / product.value.reviews.length).toFixed(1); // por ejemplo, "4.3"
 });
+
+
+const agregarAlCarrito = () => {
+  // Validaciones antes de añadir al carrito
+  if (!product.value) {
+    $q.notify({
+      type: 'negative',
+      message: 'No se pudo cargar la información del producto.',
+      position: 'top',
+      timeout: 2000,
+    });
+    return;
+  }
+
+  if (product.value.estado !== 'activo') {
+    $q.notify({
+      type: 'warning',
+      message: 'Este producto no está activo y no se puede añadir al carrito.',
+      position: 'top',
+      timeout: 2500,
+    });
+    return;
+  }
+
+  // Aseguramos que la cantidad seleccionada sea válida y no exceda el stock
+  if (cantidadSeleccionada.value <= 0 || cantidadSeleccionada.value > product.value.stock) {
+    let message = 'Por favor, selecciona una cantidad válida (mayor a 0).';
+    if (cantidadSeleccionada.value > product.value.stock) {
+      message = `No hay suficiente stock. Solo quedan ${product.value.stock} unidades.`;
+    }
+    $q.notify({
+      type: 'warning',
+      message: message,
+      position: 'top',
+      timeout: 3000,
+    });
+    return;
+  }
+
+  // === ¡Ajuste CRÍTICO aquí! ===
+  // Pasamos el objeto con las propiedades que espera el useCartStore
+  cartStore.addItem({
+    id: product.value._id,           // El ID del producto
+    nombre: product.value.nombre,    // El nombre
+    precio: product.value.price,     // ¡Aquí mapeamos 'price' de la DB a 'precio' para el store!
+    imagen: product.value.images[0], // La primera imagen
+    cantidad: cantidadSeleccionada.value, // La cantidad que el usuario seleccionó
+    stock: product.value.stock,      // El stock disponible del producto
+  });
+
+  // Opcional: Reiniciar la cantidad seleccionada a 1 después de añadir
+  cantidadSeleccionada.value = 1;
+
+  // Ya tu useCartStore.js se encarga de las notificaciones de éxito/error al añadir
+};
+
+// ... el resto de tu script setup
 
 
 onMounted(() => {
@@ -758,5 +819,4 @@ button:hover {
   font-size: 0.9rem;
   color: #555;
 }
-
 </style>
