@@ -24,12 +24,13 @@
               class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list">
               <q-item clickable v-for="item in searchResults" :key="item._id" @click="goToProduct(item)">
                 <q-item-section>
-                  <q-item-label>{{ item.nombre }}</q-item-label>
-                  <q-item-label caption>{{ item.categoryId?.nombre || item.marca || 'Sin categoría' }}</q-item-label>
+                  <q-item-label class="text-black text-weight-bold">{{ item.nombre }}</q-item-label> <q-item-label
+                    caption>{{
+                      item.categoryId?.nombre || item.marca || 'Sin categoría' }}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
-            <div v-else class="q-pa-md bg-white rounded-borders shadow-1 q-mt-sm">
+            <div v-else class="q-pa-md bg-white rounded-borders shadow-1 q-mt-sm text-black">
               No se encontraron resultados para "{{ searchQuery }}"
             </div>
           </div>
@@ -43,7 +44,7 @@
               <q-list bordered style="min-width: 170px">
                 <q-item v-close-popup>
                   <q-item-section>
-                    <q-item-label class="text-bold text-white">
+                    <q-item-label class="text-bold text-black">
                       Hola, {{ authStore.user?.nombre || 'Usuario' }}
                     </q-item-label>
                   </q-item-section>
@@ -96,7 +97,7 @@
           </q-input>
           <div v-if="searchQuery" style="position: relative;">
             <q-list v-if="searchResults.length > 0"
-              class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list">
+              class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list text-black">
               <q-item clickable v-for="item in searchResults" :key="item._id" @click="goToProduct(item)">
                 <q-item-section>
                   <q-item-label>{{ item.nombre }}</q-item-label>
@@ -104,9 +105,11 @@
                 </q-item-section>
               </q-item>
             </q-list>
-            <div v-else class="q-pa-md bg-white rounded-borders shadow-1 q-mt-sm">
+            <div v-else class="q-pa-md bg-grey-3 rounded-borders shadow-1 q-mt-sm text-black">
               No se encontraron resultados para "{{ searchQuery }}"
             </div>
+
+
           </div>
         </div>
       </q-toolbar>
@@ -203,7 +206,7 @@ const toggleLeftDrawer = () => {
 const handleSearch = async (newValue) => {
   if (newValue) {
     try {
-      const response = await getData(`/producto/search?query=${newValue}`);
+      const response = await getData(`/producto/search?search=${newValue}`);
       console.log("Respuesta completa:", response);
 
       if (response && Array.isArray(response)) {
@@ -279,6 +282,10 @@ onMounted(fetchCategories);
 </script>
 
 <style lang="scss">
+.black {
+  color: #212121;
+}
+
 #titulo {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 20px;
@@ -320,8 +327,7 @@ onMounted(fetchCategories);
 
 
 .custom-header {
-  background-color: #6d4c41 !important; 
-  color: white;
+  background-color: #6d4c41 !important;
 }
 
 .rounded-input {
@@ -338,7 +344,7 @@ onMounted(fetchCategories);
   z-index: 1000;
   max-height: 250px;
   overflow-y: auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Media Queries para responsividad */

@@ -4,6 +4,7 @@ import {router} from "./Routes/Routes"
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate"
 
+
 // Import icon libraries
 import '@quasar/extras/material-icons/material-icons.css'
 import '@quasar/extras/material-icons-outlined/material-icons-outlined.css'

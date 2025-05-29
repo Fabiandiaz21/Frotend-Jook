@@ -5,9 +5,21 @@
         <label :for="filterGroup.label">{{ filterGroup.label }}</label>
         <select :id="filterGroup.label" v-model="selectedFilters[filterGroup.label]">
           <option value="">Todos</option>
-          <option v-for="option in filterGroup.options" :key="option" :value="option">
-            {{ option }}
-          </option>
+          <template v-if="filterGroup.label === 'Categoría'">
+            <option v-for="option in filterGroup.options" :key="option._id" :value="option._id">
+              {{ option.name }}
+            </option>
+          </template>
+          <template v-else-if="filterGroup.label === 'Marca' || filterGroup.label === 'Tipo de uso'">
+            <option v-for="option in filterGroup.options" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </template>
+          <template v-else>
+            <option v-for="option in filterGroup.options" :key="option" :value="option">
+              {{ option }}
+            </option>
+          </template>
         </select>
       </div>
       <button @click="applyFilters" class="search-button">Buscar</button>
@@ -62,32 +74,31 @@
 import { ref, onMounted, watch, nextTick } from 'vue';
 import { getData } from '../Services/jook.js'; // tu función para hacer GET
 
-const search = ref(''); // Si tienes una barra de búsqueda de texto general
+const search = ref('');
 const selectedFilters = ref({
   'Ordenar por': '',
   'Categoría': '',
   'Marca': '',
   'Precio': '',
-  'Tipo de uso': ''
+  'Tipo de uso': '' // <-- ¡Cambiado de 'Tipo' a 'Tipo de uso' para que coincida!
 });
 const filterOptions = ref([
   { label: 'Ordenar por', options: ['Destacados', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'] },
-  { label: 'Categoría', options: [] }, // Se llenará dinámicamente
-  { label: 'Marca', options: [] },    // Se llenará dinámicamente
+  { label: 'Categoría', options: [] }, // Se llenará dinámicamente con objetos { _id, name }
+  { label: 'Marca', options: [] }, // Se llenará dinámicamente con strings
   { label: 'Precio', options: ['Menos de $50', '$50 - $100', 'Más de $100'] },
   { label: 'Tipo de uso', options: [] } // Se llenará dinámicamente
 ]);
 
-const products = ref([]); // Aquí se almacenarán los productos filtrados
+const products = ref([]);
 
-// Datos de carrusel (mantén tu lógica existente)
+// Datos y funciones de carrusel (mantén tu lógica existente)
 const carouselsData = ref([
   // ... tus datos de carrusel ...
 ]);
 const carouselPositions = ref([]);
 const carousels = ref([]);
 
-// Funciones del carrusel (mantén tu lógica existente)
 const moveCarousel = (index, direction) => {
   // ... tu lógica de carrusel ...
 };
@@ -97,13 +108,12 @@ const applyFilters = async () => {
   try {
     const params = new URLSearchParams();
 
-    // Agrega la búsqueda general si existe
     if (search.value) {
       params.append('search', search.value);
     }
 
-    // Agrega los filtros seleccionados
     if (selectedFilters.value['Categoría']) {
+      // Enviamos el _id de la categoría como 'categoria'
       params.append('categoria', selectedFilters.value['Categoría']);
     }
     if (selectedFilters.value['Marca']) {
@@ -111,6 +121,10 @@ const applyFilters = async () => {
     }
     if (selectedFilters.value['Ordenar por']) {
       params.append('sortBy', selectedFilters.value['Ordenar por']);
+    }
+    // Asegúrate de que el nombre del parámetro sea 'tipoUso' en el backend
+    if (selectedFilters.value['Tipo de uso']) {
+      params.append('tipo', selectedFilters.value['Tipo de uso']);
     }
 
     // Manejo del filtro de precio
@@ -129,18 +143,15 @@ const applyFilters = async () => {
       }
     }
 
-    // Nota: 'Tipo de uso' no tiene una implementación en el backend de ejemplo,
-    // si lo necesitas, debes agregar la lógica correspondiente en el backend.
-    // if (selectedFilters.value['Tipo de uso']) {
-    //   params.append('tipoUso', selectedFilters.value['Tipo de uso']);
-    // }
-
+    // Asegúrate de que la URL base sea correcta, ej: '/api/productos/search'
+    // Si tu proxy o jook.js ya agrega '/api', entonces solo '/productos/search'
     const url = `/producto/search?${params.toString()}`;
-    const data = await getData(url); // Ajusta la URL según tu configuración de proxy/ruta
+    console.log("URL de búsqueda:", url); // Para depurar
+    const data = await getData(url);
     products.value = data;
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
-    products.value = []; // Vacía los productos en caso de error
+    products.value = [];
   }
 };
 
@@ -148,28 +159,44 @@ const applyFilters = async () => {
 const loadFilterOptions = async () => {
   try {
     // Cargar categorías
-    const categorias = await getData('/categoria');
+    // Tu backend debería devolver [{ _id: '...', name: '...' }]
+    const categoriasCompletas = await getData('/categoria'); // Ajusta esta URL si tu ruta no es '/categoria' directamente
+    console.log('Datos brutos de categorías para filtro:', categoriasCompletas);
     const categoriaFilter = filterOptions.value.find(f => f.label === 'Categoría');
     if (categoriaFilter) {
-      categoriaFilter.options = categorias;
+      categoriaFilter.options = categoriasCompletas;
     }
 
     // Cargar marcas
-    const marcas = await getData('producto/marcas');
+    // Tu backend debería devolver ['Marca A', 'Marca B']
+    const marcas = await getData('/producto/marcas'); // Asumo que es '/productos/marcas'
+    console.log("respuesta marcas", marcas);
+
     const marcaFilter = filterOptions.value.find(f => f.label === 'Marca');
     if (marcaFilter) {
       marcaFilter.options = marcas;
     }
+
+    // Cargar tipos de uso
+    // Tu backend debería devolver ['Gaming', 'Oficina', 'Hogar']
+    const tiposDeUso = await getData('/producto/tipos-de-uso'); // Asumo que es '/productos/tipos-de-uso'
+    console.log("respuesta de uso", tiposDeUso);
+    const tipoUsoFilter = filterOptions.value.find(f => f.label === 'Tipo de uso');
+    if (tipoUsoFilter) {
+      tipoUsoFilter.options = tiposDeUso;
+    }
+
   } catch (error) {
     console.error('Error al cargar opciones de filtros:', error);
   }
 };
 
 onMounted(async () => {
-  // Carga inicial de productos (todos)
-  await applyFilters();
-  // Carga las opciones dinámicas de los filtros
+  // Carga las opciones dinámicas de los filtros primero
   await loadFilterOptions();
+  // Luego, carga los productos iniciales (sin filtros o con los predeterminados)
+  await applyFilters();
+
 
   // Inicializa las posiciones del carrusel si es necesario
   carouselPositions.value = carouselsData.value.map(() => 0);
@@ -187,7 +214,7 @@ onMounted(async () => {
   background-color: #f8f8f8;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  align-items: flex-end; /* Alinea los elementos al final */
+  align-items: flex-end;
 }
 
 .filter-select {
@@ -267,5 +294,6 @@ onMounted(async () => {
   font-size: 0.9rem;
   color: #555;
 }
+
 /* ... Tus estilos de carrusel y otros ... */
 </style>
