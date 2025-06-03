@@ -399,10 +399,7 @@ const agregarAlCarrito = () => {
   // Opcional: Reiniciar la cantidad seleccionada a 1 después de añadir
   cantidadSeleccionada.value = 1;
 
-  // Ya tu useCartStore.js se encarga de las notificaciones de éxito/error al añadir
 };
-
-// ... el resto de tu script setup
 
 
 onMounted(() => {
