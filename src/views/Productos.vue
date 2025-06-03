@@ -56,7 +56,7 @@
       <h2>Productos Filtrados</h2>
       <div class="product-grid">
         <div v-for="product in products" :key="product._id" class="product-card">
-          <a :href="`/product/${product._id}`" target="_blank">
+          <a :href="`/vistap/${product._id}`">
             <img :src="product.images?.[0] || 'https://via.placeholder.com/200'" alt="Producto" class="product-img">
           </a>
           <div class="product-info">
@@ -80,7 +80,7 @@ const selectedFilters = ref({
   'Categoría': '',
   'Marca': '',
   'Precio': '',
-  'Tipo de uso': '' // <-- ¡Cambiado de 'Tipo' a 'Tipo de uso' para que coincida!
+  'Tipo de uso': ''
 });
 const filterOptions = ref([
   { label: 'Ordenar por', options: ['Destacados', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'] },
@@ -148,7 +148,7 @@ const applyFilters = async () => {
     const url = `/producto/search?${params.toString()}`;
     console.log("URL de búsqueda:", url); // Para depurar
     const data = await getData(url);
-    products.value = data;
+    products.value = data.productos; 
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
     products.value = [];
@@ -205,83 +205,131 @@ onMounted(async () => {
 
 <style scoped>
 /* Agrega o modifica tus estilos CSS según sea necesario */
+.page-wrapper {
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f2f4f8;
+}
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   margin-bottom: 30px;
   padding: 20px;
-  background-color: #f8f8f8;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   align-items: flex-end;
 }
 
 .filter-select {
   display: flex;
   flex-direction: column;
+  min-width: 180px;
+  transition: transform 0.3s ease;
+}
+
+.filter-select:hover {
+  transform: scale(1.02);
 }
 
 .filter-select label {
-  font-weight: bold;
+  font-weight: 600;
   margin-bottom: 5px;
   color: #333;
+  font-size: 0.95rem;
 }
 
 .filter-select select {
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 10px;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
   font-size: 1rem;
-  background-color: #fff;
-  min-width: 150px;
+  background-color: #fdfdfd;
+  transition: border-color 0.3s;
+}
+
+.filter-select select:focus {
+  border-color: #007bff;
+  outline: none;
 }
 
 .search-button {
-  padding: 10px 20px;
+  padding: 12px 24px;
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 1rem;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s;
 }
 
 .search-button:hover {
   background-color: #0056b3;
+  transform: translateY(-1px);
 }
 
-.all-products-container {
-  margin-top: 40px;
+.carousel-container {
+  margin-bottom: 40px;
 }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.product-card {
-  border: 1px solid #eee;
-  border-radius: 8px;
+.carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  padding: 15px;
+  padding: 10px;
   background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
 }
 
-.product-card img {
-  max-width: 100%;
-  height: auto;
-  border-bottom: 1px solid #eee;
-  margin-bottom: 10px;
+.carousel-btn {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: #007bff;
+  transition: color 0.3s ease;
 }
 
-.product-info p {
-  margin: 5px 0;
+.carousel-btn:hover {
+  color: #0056b3;
+}
+
+.carousel-items {
+  display: flex;
+  transition: transform 0.3s ease-in-out;
+  gap: 20px;
+}
+
+.carousel-item {
+  min-width: 200px;
+  max-width: 200px;
+  background-color: #fdfdfd;
+  border-radius: 10px;
+  overflow: hidden;
+  text-align: center;
+  padding: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.product-img {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: transform 0.3s ease;
+}
+
+.carousel-item:hover .product-img {
+  transform: scale(1.05);
+}
+
+.product-info {
+  padding: 8px 0;
 }
 
 .product-info .price {
@@ -291,9 +339,75 @@ onMounted(async () => {
 }
 
 .product-info .desc {
-  font-size: 0.9rem;
-  color: #555;
+  font-size: 0.95rem;
+  color: #444;
 }
 
-/* ... Tus estilos de carrusel y otros ... */
+.product-info .discount {
+  font-size: 0.85rem;
+  color: #28a745;
+}
+
+.all-products-container {
+  margin-top: 40px;
+}
+
+.all-products-container h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 24px;
+}
+
+.product-card {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease-in-out;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+}
+
+.product-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.product-info .price {
+  color: #d6336c;
+  font-weight: bold;
+  font-size: 1.05rem;
+}
+
+.product-info .desc {
+  color: #555;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .filter-bar {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .carousel-item {
+    min-width: 160px;
+    max-width: 160px;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+}
 </style>

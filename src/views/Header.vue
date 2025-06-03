@@ -1,7 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
     <q-header elevated class="custom-header" height-hint="72">
-      <!-- PRIMER TOOLBAR (desktop) -->
       <q-toolbar class="q-px-md text-white">
         <q-btn flat round dense icon="menu" @click="toggleLeftDrawer" class="lt-sm q-mr-sm" />
 
@@ -12,21 +11,30 @@
           <span class="q-ml-sm text-weight-bold">Jook</span>
         </q-toolbar-title>
 
-        <div class="col q-mx-md gt-xs" style="max-width: 700px;">
+        <div class="col q-mx-md" :class="{ 'gt-xs': $q.screen.gt.xs, 'lt-sm': $q.screen.lt.sm }"
+          style="max-width: 700px; position: relative;">
           <q-input dense outlined debounce="300" v-model="searchQuery" placeholder="Buscar productos, marcas y más..."
             class="rounded-input bg-white" @update:model-value="handleSearch">
             <template #append>
               <q-icon name="search" />
             </template>
           </q-input>
-          <div v-if="searchQuery" style="position: relative;">
+
+          <div v-if="searchQuery" style="position: absolute; width: 100%; z-index: 10; top: 100%;">
             <q-list v-if="searchResults.length > 0"
-              class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list">
-              <q-item clickable v-for="item in searchResults" :key="item._id" @click="goToProduct(item)">
+              class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list text-black">
+              <q-item clickable v-for="item in searchResults" :key="item._id || item.nombre || item.name"
+                @click="handleItemClick(item)">
                 <q-item-section>
-                  <q-item-label class="text-black text-weight-bold">{{ item.nombre }}</q-item-label> <q-item-label
-                    caption>{{
-                      item.categoryId?.nombre || item.marca || 'Sin categoría' }}</q-item-label>
+                  <q-item-label v-if="item.tipoResultado === 'producto'">
+                    🛍 Producto: {{ item.nombre || '[sin nombre]' }} 
+                  </q-item-label>
+                  <q-item-label v-else-if="item.tipoResultado === 'marca'">
+                    🏷 Marca: {{ item.nombre || '[sin nombre]' }}
+                  </q-item-label>
+                  <q-item-label v-else-if="item.tipoResultado === 'categoria'">
+                    📂 Categoría: {{ item.name || item.nombre || '[sin nombre]' }} 
+                  </q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -63,11 +71,10 @@
               </q-list>
             </q-menu>
           </q-btn>
-          <q-btn v-else round flat dense icon="login" @click="$router.push('/login')" class="btn" />
+          <q-btn v-else flat dense label="Iniciar sesión" @click="$router.push('/login')" class="btn" />
         </div>
       </q-toolbar>
 
-      <!-- SEGUNDO TOOLBAR (desktop navegación) -->
       <q-toolbar class="custom-header text-white q-px-md q-py-xs gt-xs">
         <q-btn flat label="inicio" @click="$router.push('/')" class="btn" />
         <q-btn flat label="Categorías" icon-right="arrow_drop_down" class="btn">
@@ -86,33 +93,9 @@
         <q-btn flat label="Ayuda" class="btn" />
       </q-toolbar>
 
-      <!-- TOOLBAR MÓVIL -->
       <q-toolbar class="custom-header text-white q-px-md q-py-xs lt-sm">
-        <div class="col">
-          <q-input dense outlined debounce="300" v-model="searchQuery" placeholder="Buscar productos, marcas y más..."
-            class="rounded-input bg-white" @update:model-value="handleSearch">
-            <template #append>
-              <q-icon name="search" />
-            </template>
-          </q-input>
-          <div v-if="searchQuery" style="position: relative;">
-            <q-list v-if="searchResults.length > 0"
-              class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list text-black">
-              <q-item clickable v-for="item in searchResults" :key="item._id" @click="goToProduct(item)">
-                <q-item-section>
-                  <q-item-label>{{ item.nombre }}</q-item-label>
-                  <q-item-label caption>{{ item.categoryId?.nombre || item.marca || 'Sin categoría' }}</q-item-label>
-                </q-item-section>
-              </q-item>
-            </q-list>
-            <div v-else class="q-pa-md bg-grey-3 rounded-borders shadow-1 q-mt-sm text-black">
-              No se encontraron resultados para "{{ searchQuery }}"
-            </div>
+        </q-toolbar>
 
-
-          </div>
-        </div>
-      </q-toolbar>
     </q-header>
     <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
       <q-list>
@@ -182,7 +165,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router'; // Importa useRoute
 import { useQuasar } from 'quasar';
 import { getData } from '../services/jook';
 import { useAuthStore } from '../Store/useAunt';
@@ -192,6 +175,7 @@ const searchQuery = ref('');
 const categories = ref([]);
 const productsByCategory = ref([]);
 const router = useRouter();
+const route = useRoute(); // Instancia useRoute
 const $q = useQuasar();
 const searchResults = ref([]);
 const authStore = useAuthStore();
@@ -209,11 +193,31 @@ const handleSearch = async (newValue) => {
       const response = await getData(`/producto/search?search=${newValue}`);
       console.log("Respuesta completa:", response);
 
-      if (response && Array.isArray(response)) {
-        searchResults.value = response;
+      if (response && typeof response === 'object') {
+        const { productos, sugerenciasMarca, sugerenciasCategoria } = response;
+
+        searchResults.value = [
+          // Productos
+          ...productos.map(p => ({
+            ...p,
+            tipoResultado: 'producto'
+          })),
+
+          // Marcas sugeridas (como strings)
+          ...sugerenciasMarca.map(m => ({
+            nombre: m,
+            tipoResultado: 'marca'
+          })),
+
+          // Categorías sugeridas (con name y _id)
+          ...sugerenciasCategoria.map(c => ({
+            ...c,
+            tipoResultado: 'categoria'
+          }))
+        ];
       } else {
         searchResults.value = [];
-        console.warn("La respuesta del servidor no es un array de productos válido.");
+        console.warn("La respuesta del servidor no tiene el formato esperado.");
       }
     } catch (error) {
       console.error('Error al buscar:', error);
@@ -226,6 +230,23 @@ const handleSearch = async (newValue) => {
     searchResults.value = [];
   }
 };
+
+
+const handleItemClick = (item) => {
+  if (item.tipoResultado === 'producto' && item._id) {
+    router.push(`/vistaP/${item._id}`);
+  } else if (item.tipoResultado === 'marca') {
+    router.push({ name: 'vistamarca', params: { marca: item.nombre } });
+  } else if (item.tipoResultado === 'categoria' && item._id) {
+    router.push(`/vistacategoria/${item._id}`);
+  } else {
+    console.warn('Tipo de resultado no manejado:', item);
+  }
+
+  searchQuery.value = '';
+};
+
+
 const logout = () => {
   showLogoutModal.value = false;
   $q.notify({
@@ -246,15 +267,8 @@ const goToProfile = () => {
   router.push("/perfil");
 };
 
-const goToProduct = (product) => {
-  if (product && product._id) {
-    console.log('Ir al producto:', product._id);
-    router.push(`/vistaP/${product._id}`);
-    searchQuery.value = ''; // Limpiar la búsqueda al navegar
-  } else {
-    console.warn('El producto no tiene un ID válido:', product);
-  }
-};
+
+
 const fetchCategories = async () => {
   try {
     const response = await getData('/categoria');
@@ -278,7 +292,14 @@ const selectCategory = (category) => {
   router.push(`/vistacategoria/${category._id}`);
 };
 
-onMounted(fetchCategories);
+onMounted(() => {
+  fetchCategories();
+  // Verificar si hay un parámetro de búsqueda en la URL al cargar el componente
+  if (route.query.search) {
+    searchQuery.value = route.query.search;
+    handleSearch(route.query.search);
+  }
+});
 </script>
 
 <style lang="scss">
