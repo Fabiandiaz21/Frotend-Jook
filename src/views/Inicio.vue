@@ -2,28 +2,11 @@
   <div class="page-container">
     <!-- Featured Tech Slider (Full Width) -->
     <div class="full-width-slider">
-      <q-carousel 
-        v-model="featuredSlide" 
-        animated 
-        infinite 
-        autoplay
-        arrows
-        control-color="brown-6"
-        height="500px"
-        class="full-width-carousel"
-      >
-        <q-carousel-slide 
-          v-for="(slide, index) in featuredSlides" 
-          :key="index" 
-          :name="index"
-          class="column no-wrap"
-        >
+      <q-carousel v-model="featuredSlide" animated infinite autoplay arrows control-color="brown-6" height="500px"
+        class="full-width-carousel">
+        <q-carousel-slide v-for="(slide, index) in featuredSlides" :key="index" :name="index" class="column no-wrap">
           <div class="row fit justify-start items-center q-gutter-xs q-col-gutter no-wrap">
-            <q-img
-              :src="slide.image"
-              class="full-height full-width-slide-img"
-              spinner-color="brown-6"
-            >
+            <q-img :src="slide.image" class="full-height full-width-slide-img" spinner-color="brown-6">
               <div class="absolute-bottom full-width-slide-overlay">
                 <div class="text-h2 text-weight-bold text-white">{{ slide.title }}</div>
                 <div class="text-h5 q-mb-lg">{{ slide.description }}</div>
@@ -68,40 +51,18 @@
         <div class="text-h3 q-pb-xl text-center text-weight-bold text-brown-8">Explora por Categorías</div>
       </q-card-section>
 
-      <q-carousel 
-        v-model="categorySlide" 
-        transition-prev="scale" 
-        transition-next="scale" 
-        swipeable 
-        animated
-        control-color="brown-6" 
-        padding 
-        arrows 
-        height="300px"
-        class="bg-brown-1 rounded-borders category-carousel shadow-3" 
-        @mouseenter="stopCategoryAutoplay" 
-        @mouseleave="startCategoryAutoplay"
-      >
-        <q-carousel-slide 
-          v-for="(chunk, index) in categoryChunks" 
-          :key="index" 
-          :name="index"
-          class="column no-wrap"
-        >
+      <q-carousel v-model="categorySlide" transition-prev="scale" transition-next="scale" swipeable animated
+        control-color="brown-6" padding arrows height="300px"
+        class="bg-brown-1 rounded-borders category-carousel shadow-3" @mouseenter="stopCategoryAutoplay"
+        @mouseleave="startCategoryAutoplay">
+        <q-carousel-slide v-for="(chunk, index) in categoryChunks" :key="index" :name="index" class="column no-wrap">
           <div class="row no-wrap justify-center q-px-xl">
-            <q-card 
-              v-for="(category, cardIndex) in chunk" 
-              :key="category._id"
-              class="category-card cursor-pointer q-hoverable q-mx-sm"
-              @click="selectCategory(category)" 
-              :data-index="cardIndex"
-            >
+            <q-card v-for="(category, cardIndex) in chunk" :key="category._id"
+              class="category-card cursor-pointer q-hoverable q-mx-sm" @click="selectCategory(category)"
+              :data-index="cardIndex">
               <span class="q-focus-helper"></span>
-              <q-img 
-                :src="category.image || 'https://cdn.quasar.dev/img/mountains.jpg'" 
-                :ratio="1" 
-                class="category-img"
-              >
+              <q-img :src="category.image || 'https://cdn.quasar.dev/img/mountains.jpg'" :ratio="1"
+                class="category-img">
                 <div class="absolute-bottom text-center category-name">
                   <span class="text-h5">{{ category.name }}</span>
                 </div>
@@ -118,41 +79,16 @@
         <div class="text-h3 q-pb-xl text-center text-weight-bold text-brown-8">Nuestras Marcas</div>
       </q-card-section>
 
-      <q-carousel 
-        v-model="brandSlide" 
-        transition-prev="scale" 
-        transition-next="scale" 
-        swipeable 
-        animated
-        control-color="brown-6" 
-        padding 
-        arrows 
-        height="300px" 
-        class="bg-brown-1 rounded-borders brand-carousel shadow-3"
-        @mouseenter="stopBrandAutoplay" 
-        @mouseleave="startBrandAutoplay"
-      >
-        <q-carousel-slide 
-          v-for="(chunk, index) in brandChunks" 
-          :key="index" 
-          :name="index"
-          class="column no-wrap"
-        >
+      <q-carousel v-model="brandSlide" transition-prev="scale" transition-next="scale" swipeable animated
+        control-color="brown-6" padding arrows height="300px" class="bg-brown-1 rounded-borders brand-carousel shadow-3"
+        @mouseenter="stopBrandAutoplay" @mouseleave="startBrandAutoplay">
+        <q-carousel-slide v-for="(chunk, index) in brandChunks" :key="index" :name="index" class="column no-wrap">
           <div class="row no-wrap justify-center q-px-xl">
-            <q-card 
-              v-for="(brand, cardIndex) in chunk" 
-              :key="brand.name"
-              class="brand-card cursor-pointer q-hoverable q-mx-sm" 
-              @click="selectBrand(brand)"
-              :data-index="cardIndex"
-            >
+            <q-card v-for="(brand, cardIndex) in chunk" :key="brand.name"
+              class="brand-card cursor-pointer q-hoverable q-mx-sm" @click="selectBrand(brand)" :data-index="cardIndex">
               <span class="q-focus-helper"></span>
-              <q-img 
-                :src="brand.image || 'https://cdn.quasar.dev/img/material.png'" 
-                :ratio="1" 
-                class="brand-img"
-              >
-                <div class="absolute-bottom text-center brand-name"> 
+              <q-img :src="brand.image || 'https://cdn.quasar.dev/img/material.png'" :ratio="1" class="brand-img">
+                <div class="absolute-bottom text-center brand-name">
                   <span class="text-h5">{{ brand.name }}</span>
                 </div>
               </q-img>
@@ -167,9 +103,10 @@
       <div class="footer-content">
         <div class="footer-section">
           <h4 class="text-h4 text-white">TecnoShop</h4>
-          <p class="text-subtitle1 text-brown-2 q-mt-md">Tu tienda de tecnología confiable con los mejores productos y precios.</p>
+          <p class="text-subtitle1 text-brown-2 q-mt-md">Tu tienda de tecnología confiable con los mejores productos y
+            precios.</p>
         </div>
-        
+
         <div class="footer-section">
           <h4 class="text-h4 text-white">Categorías</h4>
           <ul class="footer-links">
@@ -178,28 +115,22 @@
             <li><a href="#" class="text-subtitle1">Tablets</a></li>
           </ul>
         </div>
-        
+
         <div class="footer-section">
           <h4 class="text-h4 text-white">Contacto</h4>
           <p class="text-subtitle1 text-brown-2"><q-icon name="email" /> contacto@tecnoshop.com</p>
           <p class="text-subtitle1 text-brown-2"><q-icon name="phone" /> +1 234 567 890</p>
         </div>
-        
+
         <div class="footer-section">
           <h4 class="text-h4 text-white">Newsletter</h4>
-          <q-input 
-            outlined 
-            dense 
-            bg-color="brown-8" 
-            color="brown-2" 
-            placeholder="Tu correo electrónico" 
-            class="q-mb-sm"
-          >
+          <q-input outlined dense bg-color="brown-8" color="brown-2" placeholder="Tu correo electrónico"
+            class="q-mb-sm">
             <template v-slot:append>
               <q-btn icon="send" color="brown-6" dense flat />
             </template>
           </q-input>
-          
+
           <div class="social-icons q-mt-md">
             <q-btn flat round dense icon="facebook" class="social-icon text-brown-2" />
             <q-btn flat round dense icon="twitter" class="social-icon text-brown-2" />
@@ -207,7 +138,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="footer-bottom bg-brown-10">
         <div class="footer-bottom-content">
           <p class="text-caption text-brown-3">&copy; 2023 TecnoShop. Todos los derechos reservados.</p>
@@ -348,15 +279,15 @@ const brandChunks = computed(() => {
 
 const fetchBrands = async () => {
   try {
-    const response = await getData('/producto/marcas'); 
+    const response = await getData('/producto/marcas');
     if (Array.isArray(response)) {
-      const uniqueBrands = [...new Set(response.filter(Boolean))]; 
-      
+      const uniqueBrands = [...new Set(response.filter(Boolean))];
+
       brands.value = uniqueBrands.map(brandName => ({
         name: brandName,
         image: 'https://cdn.quasar.dev/img/material.png' // Default image for brands
       }));
-      
+
       console.log('Marcas procesadas para el carrusel:', brands.value);
     } else {
       console.warn('La respuesta de la API de marcas no es un array o está vacía:', response);
@@ -414,10 +345,10 @@ onUnmounted(() => {
   margin-left: -50vw;
   margin-right: -50vw;
   margin-bottom: 60px;
-  
+
   .full-width-carousel {
     border-radius: 0 !important;
-    
+
     .q-carousel__arrow {
       margin: 0 50px;
       background: rgba(255, 255, 255, 0.3);
@@ -425,32 +356,32 @@ onUnmounted(() => {
       border-radius: 50%;
       width: 50px;
       height: 50px;
-      
+
       &:hover {
         background: rgba(255, 255, 255, 0.5);
       }
     }
   }
-  
+
   .full-width-slide-img {
     object-fit: cover;
   }
-  
+
   .full-width-slide-overlay {
     background: linear-gradient(to top, rgba(44, 33, 27, 0.85), transparent);
     padding: 80px;
     color: white;
     text-align: center;
-    
+
     .text-h2 {
       font-weight: bold;
-      text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
       margin-bottom: 20px;
       font-size: 3.5rem;
     }
-    
+
     .text-h5 {
-      text-shadow: 1px 1px 4px rgba(0,0,0,0.7);
+      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
       max-width: 900px;
       margin: 0 auto 30px;
       font-size: 1.8rem;
@@ -465,13 +396,13 @@ onUnmounted(() => {
   height: 280px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: 16px !important;
-  
+
   &:hover {
     transform: translateY(-10px);
     box-shadow: 0 15px 30px rgba(89, 71, 58, 0.3) !important;
     background: #efebe9 !important;
   }
-  
+
   .q-card__section {
     height: 100%;
     display: flex;
@@ -480,20 +411,22 @@ onUnmounted(() => {
     align-items: center;
     padding: 30px;
   }
-  
+
   .service-icon {
     font-size: 3.5rem;
   }
 }
 
 /* Category and Brand Cards - MODIFIED */
-.category-carousel, .brand-carousel {
+.category-carousel,
+.brand-carousel {
   .q-carousel__slide {
     padding: 0 !important;
     display: flex;
-    align-items: center; /* Centra verticalmente las cards */
+    align-items: center;
+    /* Centra verticalmente las cards */
   }
-  
+
   .q-carousel__arrow {
     margin: 0 20px;
     background: rgba(89, 71, 58, 0.3);
@@ -501,14 +434,15 @@ onUnmounted(() => {
     border-radius: 50%;
     width: 40px;
     height: 40px;
-    
+
     &:hover {
       background: rgba(89, 71, 58, 0.5);
     }
   }
 }
 
-.category-card, .brand-card {
+.category-card,
+.brand-card {
   width: 220px;
   height: 220px;
   min-width: 220px;
@@ -520,20 +454,23 @@ onUnmounted(() => {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border-radius: 16px !important;
   border: 1px solid #d7ccc8;
-  margin: 30px; /* Añade margen vertical */
-  
+  margin: 30px;
+  /* Añade margen vertical */
+
   &:hover {
     transform: translateY(-10px);
     box-shadow: 0 15px 30px rgba(89, 71, 58, 0.3) !important;
   }
 
-  .category-img, .brand-img {
+  .category-img,
+  .brand-img {
     height: 100%;
     width: 100%;
     object-fit: cover;
   }
 
-  .category-name, .brand-name {
+  .category-name,
+  .brand-name {
     padding: 16px;
     width: 100%;
     background: rgba(89, 71, 58, 0.9);
@@ -541,7 +478,7 @@ onUnmounted(() => {
     font-weight: 500;
     border-bottom-left-radius: 16px;
     border-bottom-right-radius: 16px;
-    
+
     span {
       display: block;
       white-space: nowrap;
@@ -560,7 +497,7 @@ onUnmounted(() => {
   margin-left: -50vw;
   margin-right: -50vw;
   padding: 40px 0 0;
-  
+
   .footer-content {
     display: flex;
     flex-wrap: wrap;
@@ -568,19 +505,19 @@ onUnmounted(() => {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 40px;
-    
+
     .footer-section {
       flex: 1;
       min-width: 250px;
       margin-bottom: 30px;
       padding: 0 20px;
-      
+
       h4 {
         margin-bottom: 15px;
         font-size: 1.25rem;
         position: relative;
         padding-bottom: 10px;
-        
+
         &::after {
           content: '';
           position: absolute;
@@ -591,26 +528,26 @@ onUnmounted(() => {
           background: #a1887f;
         }
       }
-      
+
       p {
         margin-bottom: 10px;
         line-height: 1.4;
         font-size: 0.9rem;
       }
-      
+
       .footer-links {
         list-style: none;
         padding: 0;
-        
+
         li {
           margin-bottom: 8px;
-          
+
           a {
             color: #d7ccc8;
             text-decoration: none;
             transition: color 0.3s ease;
             font-size: 0.9rem;
-            
+
             &:hover {
               color: white;
               text-decoration: underline;
@@ -619,25 +556,25 @@ onUnmounted(() => {
         }
       }
     }
-    
+
     .social-icons {
       display: flex;
       gap: 15px;
-      
+
       .social-icon {
         transition: color 0.3s ease;
         font-size: 1.5rem;
-        
+
         &:hover {
           color: #a1887f !important;
         }
       }
     }
   }
-  
+
   .footer-bottom {
     padding: 20px 0;
-    
+
     .footer-bottom-content {
       max-width: 1200px;
       margin: 0 auto;
@@ -646,20 +583,21 @@ onUnmounted(() => {
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      
-      p, a {
+
+      p,
+      a {
         font-size: 0.75rem;
       }
-      
+
       .footer-links {
         display: flex;
         gap: 15px;
-        
+
         a {
           color: #a1887f;
           text-decoration: none;
           transition: color 0.3s ease;
-          
+
           &:hover {
             color: #d7ccc8;
           }
@@ -673,11 +611,11 @@ onUnmounted(() => {
 @media (max-width: 1440px) {
   .full-width-slide-overlay {
     padding: 60px !important;
-    
+
     .text-h2 {
       font-size: 3rem !important;
     }
-    
+
     .text-h5 {
       font-size: 1.5rem !important;
     }
@@ -688,25 +626,27 @@ onUnmounted(() => {
   .service-card {
     max-width: 280px;
     height: 260px;
-    
+
     .text-h4 {
       font-size: 1.6rem !important;
     }
-    
+
     .text-h6 {
       font-size: 1.1rem !important;
     }
   }
-  
-  .category-card, .brand-card {
+
+  .category-card,
+  .brand-card {
     width: 200px;
     height: 200px;
     min-width: 200px;
     margin: 20px;
-    
-    .category-name, .brand-name {
+
+    .category-name,
+    .brand-name {
       padding: 12px;
-      
+
       span {
         font-size: 1.2rem;
       }
@@ -717,26 +657,27 @@ onUnmounted(() => {
 @media (max-width: 1475px) {
   .full-width-slide-overlay {
     padding: 40px !important;
-    
+
     .text-h2 {
       font-size: 2.5rem !important;
     }
-    
+
     .text-h5 {
       font-size: 1.3rem !important;
     }
   }
-  
+
   .service-card {
     height: 240px;
     max-width: 280px;
-    
+
     .service-icon {
       font-size: 3rem;
     }
   }
-  
-  .category-card, .brand-card {
+
+  .category-card,
+  .brand-card {
     width: 180px;
     height: 180px;
     min-width: 180px;
@@ -746,101 +687,104 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .full-width-slider {
     height: 400px !important;
-    
+
     .full-width-slide-overlay {
       padding: 30px !important;
-      
+
       .text-h2 {
         font-size: 2rem !important;
         margin-bottom: 15px;
       }
-      
+
       .text-h5 {
         font-size: 1.1rem !important;
         margin-bottom: 20px;
       }
     }
-    
+
     .q-carousel__arrow {
       margin: 0 20px !important;
       width: 40px !important;
       height: 40px !important;
     }
   }
-  
+
   .service-card {
     max-width: 100%;
     height: 200px;
-    
+
     .text-h4 {
       font-size: 1.5rem !important;
     }
-    
+
     .text-h6 {
       font-size: 1rem !important;
     }
   }
-  
+
   /* Modified for responsive cards */
-  .category-carousel, .brand-carousel {
+  .category-carousel,
+  .brand-carousel {
     .row.no-wrap {
       flex-wrap: wrap !important;
       justify-content: center !important;
       overflow-x: hidden !important;
       width: 100% !important;
     }
-    
-    .category-card, .brand-card {
+
+    .category-card,
+    .brand-card {
       width: calc(50% - 20px) !important;
       min-width: auto !important;
       margin: 10px !important;
       height: 160px;
     }
   }
-  
-  .category-card, .brand-card {
+
+  .category-card,
+  .brand-card {
     .text-h5 {
       font-size: 1rem !important;
     }
   }
-  
+
   .compact-full-width-footer {
     .footer-content {
       flex-direction: column;
       padding: 0 30px !important;
-      
+
       .footer-section {
         text-align: center;
         margin-bottom: 30px;
-        
+
         h4::after {
           left: 50% !important;
           transform: translateX(-50%) !important;
         }
-        
+
         .footer-links {
           display: flex;
           flex-wrap: wrap;
           justify-content: center;
           gap: 15px;
-          
+
           li {
             margin-bottom: 8px;
           }
         }
       }
-      
+
       .social-icons {
         justify-content: center;
         gap: 15px;
       }
     }
-    
+
     .footer-bottom-content {
       flex-direction: column;
       gap: 10px;
       text-align: center;
-      
+
       .footer-links {
         justify-content: center !important;
         flex-wrap: wrap;
@@ -854,29 +798,33 @@ onUnmounted(() => {
   .full-width-slider {
     height: 350px !important;
   }
-  
+
   .service-card {
     height: 180px;
-    
+
     .service-icon {
       font-size: 2.5rem;
     }
-    
+
     .text-h4 {
       font-size: 1.3rem !important;
     }
   }
-  
+
   /* 2 cards on very small screens */
-  .category-carousel, .brand-carousel {
-    .category-card, .brand-card {
+  .category-carousel,
+  .brand-carousel {
+
+    .category-card,
+    .brand-card {
       width: calc(50% - 20px) !important;
     }
   }
-  
-  .category-card, .brand-card {
+
+  .category-card,
+  .brand-card {
     width: 130px;
     height: 130px;
-}
+  }
 }
 </style>
