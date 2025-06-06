@@ -4,6 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(null);
+  const favorites = ref([]);
   const user = ref(null);
   const userRole = ref(null);
   const userID = ref();
@@ -40,6 +41,7 @@ export const useAuthStore = defineStore('auth', () => {
     user,
     userID,
     userRole,
+    favorites,
     setToken,
     setUser,
     setUserRole,

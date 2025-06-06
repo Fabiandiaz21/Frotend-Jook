@@ -4,7 +4,7 @@
       <q-toolbar class="q-px-md text-white">
         <q-btn flat round dense icon="menu" @click="toggleLeftDrawer" class="lt-sm q-mr-sm" />
 
-        <q-toolbar-title class="flex items-center" id="titulo" style="min-width: 150px; color: white;">
+        <q-toolbar-title class="flex items-center" id="titulo" style="min-width: 150px; color: white">
           <q-avatar size="36px" class="bg-yellow-8 text-white">
             <q-icon name="shopping_cart" />
           </q-avatar>
@@ -12,7 +12,7 @@
         </q-toolbar-title>
 
         <div class="col q-mx-md" :class="{ 'gt-xs': $q.screen.gt.xs, 'lt-sm': $q.screen.lt.sm }"
-          style="max-width: 700px; position: relative;">
+          style="max-width: 700px; position: relative">
           <q-input dense outlined debounce="300" v-model="searchQuery" placeholder="Buscar productos, marcas y más..."
             class="rounded-input bg-white" @update:model-value="handleSearch">
             <template #append>
@@ -20,24 +20,24 @@
             </template>
           </q-input>
 
-          <div v-if="searchQuery" style="position: absolute; width: 100%; z-index: 10; top: 100%;">
+          <div v-if="searchQuery" style="position: absolute; width: 100%; z-index: 10; top: 100%">
             <q-list v-if="searchResults.length > 0"
               class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list text-black">
               <q-item clickable v-for="item in sortedSearchResults" :key="item._id || item.nombre || item.name"
                 @click="handleItemClick(item)">
                 <q-item-section>
                   <q-item-label v-if="item.tipoResultado === 'producto'">
-                    📦 Producto: {{ item.nombre || '[sin nombre]' }}
+                    📦 Producto: {{ item.nombre || "[sin nombre]" }}
                   </q-item-label>
                   <q-item-label v-else-if="item.tipoResultado === 'marca'">
-                    🏷️ Marca: {{ item.nombre || '[sin nombre]' }}
+                    🏷️ Marca: {{ item.nombre || "[sin nombre]" }}
                   </q-item-label>
                   <q-item-label v-else-if="item.tipoResultado === 'categoria'">
-                    📂 Categoría: {{ item.name || item.nombre || '[sin nombre]' }}
+                    📂 Categoría:
+                    {{ item.name || item.nombre || "[sin nombre]" }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
-
             </q-list>
             <div v-else class="q-pa-md bg-white rounded-borders shadow-1 q-mt-sm text-black">
               No se encontraron resultados para "{{ searchQuery }}"
@@ -46,23 +46,30 @@
         </div>
 
         <div class="flex items-center">
-          <q-btn flat round dense icon="favorite_border" @click="$router.push('/favoritos')" class="q-mr-sm btn" />
-          <div class="q-pa-md">
-    <div class="cart-button-container">
-      <q-btn  flat round dense icon="shopping_cart" @click="$router.push('/carrito')" class="q-mr-sm btn" />
-      <q-badge v-if="cartStore.items.length > 0" floating color="red" rounded class="cart-badge">
-        {{ cartStore.items.length }}
-      </q-badge>
-    </div>
 
-    </div>
+          <div class="cart-button-container">
+            <q-btn flat round dense icon="favorite_border" @click="$router.push('/favoritos')" class="q-mr-sm btn" />
+            <q-badge v-if="authStore.favorites.length > 0" floating color="red" rounded class="cart-badge">
+              {{ authStore.favorites.length }}
+            </q-badge>
+          </div>
+
+          <div class="q-pa-md">
+            <div class="cart-button-container">
+              <q-btn flat round dense icon="shopping_cart" @click="$router.push('/carrito')" class="q-mr-sm btn" />
+              <q-badge v-if="cartStore.items.length > 0" floating color="red" rounded class="cart-badge">
+                {{ cartStore.items.length }}
+              </q-badge>
+            </div>
+          </div>
+
           <q-btn v-if="isLoggedIn" round flat dense icon="account_circle" class="btn">
             <q-menu>
               <q-list bordered style="min-width: 170px">
                 <q-item v-close-popup>
                   <q-item-section>
                     <q-item-label class="text-bold text-black">
-                      Hola, {{ authStore.user?.nombre || 'Usuario' }}
+                      Hola, {{ authStore.user?.nombre || "Usuario" }}
                     </q-item-label>
                   </q-item-section>
                 </q-item>
@@ -91,7 +98,9 @@
             <q-list style="min-width: 250px; max-height: 300px; overflow-y: auto">
               <q-item v-for="categoria in categories" :key="categoria._id" clickable @click="selectCategory(categoria)">
                 <q-item-section>
-                  <q-item-label class="text-bold">{{ categoria.name }}</q-item-label>
+                  <q-item-label class="text-bold">{{
+                    categoria.name
+                  }}</q-item-label>
                 </q-item-section>
               </q-item>
             </q-list>
@@ -104,27 +113,27 @@
 
       <q-toolbar class="custom-header text-white q-px-md q-py-xs lt-sm">
       </q-toolbar>
-
     </q-header>
     <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
       <q-list>
-        <q-item-label header>
-          Menú de Navegación
-        </q-item-label>
+        <q-item-label header> Menú de Navegación </q-item-label>
 
-        <q-item clickable v-ripple @click="$router.push('/'); leftDrawerOpen = false;">
+        <q-item clickable v-ripple @click="
+          $router.push('/');
+        leftDrawerOpen = false;
+        ">
           <q-item-section avatar>
             <q-icon name="home" />
           </q-item-section>
-          <q-item-section>
-            Inicio
-          </q-item-section>
+          <q-item-section> Inicio </q-item-section>
         </q-item>
 
         <q-expansion-item expand-separator icon="category" label="Categorías">
           <q-list class="q-pl-lg">
-            <q-item v-for="categoria in categories" :key="categoria._id" clickable v-ripple
-              @click="selectCategory(categoria); leftDrawerOpen = false;">
+            <q-item v-for="categoria in categories" :key="categoria._id" clickable v-ripple @click="
+              selectCategory(categoria);
+            leftDrawerOpen = false;
+            ">
               <q-item-section>
                 <q-item-label>{{ categoria.name }}</q-item-label>
               </q-item-section>
@@ -132,24 +141,25 @@
           </q-list>
         </q-expansion-item>
 
-        <q-item clickable v-ripple @click="$router.push('/productos'); leftDrawerOpen = false;">
+        <q-item clickable v-ripple @click="
+          $router.push('/productos');
+        leftDrawerOpen = false;
+        ">
           <q-item-section avatar>
             <q-icon name="shopping_bag" />
           </q-item-section>
-          <q-item-section>
-            Productos
-          </q-item-section>
+          <q-item-section> Productos </q-item-section>
         </q-item>
 
-        <q-item clickable v-ripple @click="$router.push('/ayuda'); leftDrawerOpen = false;">
+        <q-item clickable v-ripple @click="
+          $router.push('/ayuda');
+        leftDrawerOpen = false;
+        ">
           <q-item-section avatar>
             <q-icon name="help" />
           </q-item-section>
-          <q-item-section>
-            Ayuda
-          </q-item-section>
+          <q-item-section> Ayuda </q-item-section>
         </q-item>
-
       </q-list>
     </q-drawer>
 
@@ -173,27 +183,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router'; // Importa useRoute
-import { useQuasar } from 'quasar';
-import { getData } from '../services/jook';
-import { useAuthStore } from '../Store/useAunt';
-
+import { ref, onMounted, computed } from "vue";
+import { useRouter, useRoute } from "vue-router"; // Importa useRoute
+import { useQuasar } from "quasar";
+import { getData } from "../services/jook";
+import { useAuthStore } from "../Store/useAunt";
+import { cargarFavoritos } from "../utils/utils";
 const showLogoutModal = ref(false);
-const searchQuery = ref('');
+const searchQuery = ref("");
 const categories = ref([]);
 const productsByCategory = ref([]);
 const router = useRouter();
 const route = useRoute(); // Instancia useRoute
 const $q = useQuasar();
 const searchResults = ref([]);
-import { useCartStore } from '../Store/useCartStore';
+import { useCartStore } from "../Store/useCartStore";
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const isLoggedIn = computed(() => authStore.isLoggedIn());
-
-
-
 
 const sortedSearchResults = computed(() => {
   return [...searchResults.value].sort((a, b) => {
@@ -214,38 +221,38 @@ const handleSearch = async (newValue) => {
       const response = await getData(`/producto/search?search=${newValue}`);
       console.log("Respuesta completa:", response);
 
-      if (response && typeof response === 'object') {
+      if (response && typeof response === "object") {
         const { productos, sugerenciasMarca, sugerenciasCategoria } = response;
 
         searchResults.value = [
           // Productos
-          ...productos.map(p => ({
+          ...productos.map((p) => ({
             ...p,
-            tipoResultado: 'producto'
+            tipoResultado: "producto",
           })),
 
           // Marcas sugeridas (como strings)
-          ...sugerenciasMarca.map(m => ({
+          ...sugerenciasMarca.map((m) => ({
             _id: m._id,
             nombre: m.nombre,
-            tipoResultado: 'marca'
+            tipoResultado: "marca",
           })),
 
           // Categorías sugeridas (con name y _id)
-          ...sugerenciasCategoria.map(c => ({
+          ...sugerenciasCategoria.map((c) => ({
             ...c,
-            tipoResultado: 'categoria'
-          }))
+            tipoResultado: "categoria",
+          })),
         ];
       } else {
         searchResults.value = [];
         console.warn("La respuesta del servidor no tiene el formato esperado.");
       }
     } catch (error) {
-      console.error('Error al buscar:', error);
+      console.error("Error al buscar:", error);
       $q.notify({
-        type: 'negative',
-        message: 'Ocurrió un error al realizar la búsqueda.',
+        type: "negative",
+        message: "Ocurrió un error al realizar la búsqueda.",
       });
     }
   } else {
@@ -254,28 +261,26 @@ const handleSearch = async (newValue) => {
 };
 
 const handleItemClick = (item) => {
-  if (item.tipoResultado === 'producto' && item._id) {
+  if (item.tipoResultado === "producto" && item._id) {
     router.push(`/vistaP/${item._id}`);
-  } else if (item.tipoResultado === 'marca' && item._id) {
-    router.push({ name: 'vistamarca', params: { id: item._id } });
-  } else if (item.tipoResultado === 'categoria' && item._id) {
+  } else if (item.tipoResultado === "marca" && item._id) {
+    router.push({ name: "vistamarca", params: { id: item._id } });
+  } else if (item.tipoResultado === "categoria" && item._id) {
     router.push(`/vistacategoria/${item._id}`);
   } else {
-    console.warn('Tipo de resultado no manejado:', item);
+    console.warn("Tipo de resultado no manejado:", item);
   }
 
-  searchQuery.value = '';
+  searchQuery.value = "";
 };
-
-
 
 const logout = () => {
   showLogoutModal.value = false;
   $q.notify({
-    type: 'positive',
-    message: 'Sesión cerrada correctamente',
-    position: 'bottom',
-    timeout: 2000
+    type: "positive",
+    message: "Sesión cerrada correctamente",
+    position: "bottom",
+    timeout: 2000,
   });
 
   authStore.clearAuth();
@@ -289,33 +294,33 @@ const goToProfile = () => {
   router.push("/perfil");
 };
 
-
-
 const fetchCategories = async () => {
   try {
-    const response = await getData('/categoria');
+    const response = await getData("/categoria");
     if (Array.isArray(response)) {
       categories.value = response;
     } else {
-      console.warn('La respuesta de la API de categorías no es un array:', response);
+      console.warn(
+        "La respuesta de la API de categorías no es un array:",
+        response
+      );
       categories.value = [];
     }
   } catch (err) {
-    console.error('Error al cargar categorías:', err);
-    $q.notify({ type: 'negative', message: 'Error al cargar categorías' });
+    console.error("Error al cargar categorías:", err);
+    $q.notify({ type: "negative", message: "Error al cargar categorías" });
   }
 };
 
-
-
 const selectCategory = (category) => {
-  console.log('Categoría seleccionada:', category);
-  console.log('URL de navegación:', `/vistacategoria/${category._id}`);
+  console.log("Categoría seleccionada:", category);
+  console.log("URL de navegación:", `/vistacategoria/${category._id}`);
   router.push(`/vistacategoria/${category._id}`);
 };
 
 onMounted(() => {
   fetchCategories();
+  cargarFavoritos();
   // Verificar si hay un parámetro de búsqueda en la URL al cargar el componente
   if (route.query.search) {
     searchQuery.value = route.query.search;
@@ -329,7 +334,6 @@ onMounted(() => {
   color: #212121;
 }
 
-
 .cart-button-container {
   position: relative;
   display: inline-block;
@@ -337,8 +341,10 @@ onMounted(() => {
 
 .cart-badge {
   position: absolute;
-  top: 1px;      /* Ajusta este valor (disminúyelo para subir la burbuja) */
-  right: 1px;    /* Ajusta este valor (disminúyelo para acercar la burbuja al icono) */
+  top: 1px;
+  /* Ajusta este valor (disminúyelo para subir la burbuja) */
+  right: 1px;
+  /* Ajusta este valor (disminúyelo para acercar la burbuja al icono) */
   transform: translate(5%, -30%);
   font-size: 0.7em;
   padding: 3px 6px;
@@ -352,7 +358,7 @@ onMounted(() => {
 }
 
 #titulo {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: #212121;
@@ -389,7 +395,6 @@ onMounted(() => {
   border: 1px solid #ddd;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-
 
 .custom-header {
   background-color: #6d4c41 !important;
@@ -432,7 +437,6 @@ onMounted(() => {
 }
 
 @media (min-width: $breakpoint-sm-min) {
-
   .q-toolbar .col.q-mx-md.gt-xs {
     display: block;
   }
