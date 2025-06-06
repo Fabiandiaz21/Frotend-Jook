@@ -38,37 +38,21 @@
   
   <script setup>
   import { ref, onMounted } from 'vue'
-  import { useQuasar } from 'quasar'
+  import { cargarFavoritos } from '../utils/utils'
   import { useRouter } from 'vue-router'
-  import { getData } from '../services/jook'
-  
-  const favoritos = ref([])
-  const $q = useQuasar()
+  import { useAuthStore } from '../Store/useAunt'
+  const authStore = useAuthStore()
   const router = useRouter()
+
+  const favoritos = authStore.favorites;
   
-  const cargarFavoritos = async () => {
-    try {
-      const response = await getData('usuario/favoritos')
-      console.log('Respuesta favoritos:', response)
   
-      if (response && Array.isArray(response)) {
-        favoritos.value = response
-      } else {
-        favoritos.value = []
-        console.warn('La respuesta del servidor no es un array de productos válido.')
-      }
-    } catch (error) {
-      console.error('Error cargando favoritos:', error)
-      $q.notify({
-        type: 'negative',
-        message: 'Ocurrió un error al cargar los favoritos.',
-      })
-    }
-  }
+
   
   const verDetalle = (id) => {
     router.push(`/vistap/${id}`)
   }
+
   
   onMounted(() => {
     cargarFavoritos()
