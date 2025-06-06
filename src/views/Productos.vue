@@ -11,13 +11,13 @@
             </option>
           </template>
           <template v-else-if="filterGroup.label === 'Marca' || filterGroup.label === 'Tipo de uso'">
-            <option v-for="option in filterGroup.options" :key="option" :value="option">
-              {{ option }}
+            <option v-for="option in filterGroup.options" :key="option?.nombre" :value="option?.nombre">
+              {{ option?.nombre }}
             </option>
           </template>
           <template v-else>
             <option v-for="option in filterGroup.options" :key="option" :value="option">
-              {{ option }}
+              {{ option.nombre }}
             </option>
           </template>
         </select>
@@ -60,7 +60,7 @@
             <img :src="product.images?.[0] || 'https://via.placeholder.com/200'" alt="Producto" class="product-img">
           </a>
           <div class="product-info">
-            <p class="price">{{ `$${product.price}` }}</p>
+            <p class="price">{{ `$${formatNumberWithThousandsSeparator(product.price)}` }}</p>
             <p class="desc">{{ product.nombre }}</p>
           </div>
         </div>
@@ -73,6 +73,7 @@
 <script setup>
 import { ref, onMounted, watch, nextTick } from 'vue';
 import { getData } from '../Services/jook.js'; // tu función para hacer GET
+import { formatNumberWithThousandsSeparator } from '../utils/utils.js';
 
 const search = ref('');
 const selectedFilters = ref({
@@ -148,7 +149,7 @@ const applyFilters = async () => {
     const url = `/producto/search?${params.toString()}`;
     console.log("URL de búsqueda:", url); // Para depurar
     const data = await getData(url);
-    products.value = data.productos; 
+    products.value = data.productos;
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
     products.value = [];

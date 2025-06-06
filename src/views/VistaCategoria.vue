@@ -2,10 +2,20 @@
   <q-page padding>
     <div class="q-pa-md">
       <h4 class="text-h4 q-my-md text-center">
-        Productos de la Categoría - {{ categoria.name || 'Sin nombre' }}
+        Productos de la Marca - {{ marca.name || 'Sin nombre' }}
       </h4>
 
-      <div v-if="products.length > 0" class="q-gutter-md row items-start">
+      <div v-if="loading" class="text-center q-py-lg">
+        <q-spinner-dots color="primary" size="3em" />
+        <div class="q-mt-md">Cargando productos de {{ marca.name || 'la marca' }}...</div>
+      </div>
+
+      <div v-else-if="error" class="text-center q-py-lg text-negative">
+        <q-icon name="error" size="2em" />
+        <div class="q-mt-md">{{ error }}</div>
+      </div>
+
+      <div v-else-if="products.length > 0" class="q-gutter-md row items-start justify-center">
         <q-card v-for="product in products" :key="product._id" class="my-card col-xs-12 col-sm-6 col-md-4 col-lg-3">
           <q-img
             :src="product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/300x200?text=No+Image'"
@@ -29,7 +39,7 @@
 
           <q-card-section class="q-pt-none">
             <div class="text-caption text-grey">
-              {{ product.descripcion.substring(0, 100) }}...
+              {{ product.descripcion ? product.descripcion.substring(0, 100) + '...' : 'Sin descripción.' }}
             </div>
           </q-card-section>
 
@@ -41,7 +51,7 @@
       </div>
 
       <div v-else class="q-pa-md text-center text-h6 text-grey">
-        No se encontraron productos para esta categoría.
+        No se encontraron productos para esta marca.
       </div>
     </div>
   </q-page>
@@ -52,15 +62,16 @@ import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { getData } from '../services/jook'; // Asegúrate de que esta ruta sea correcta
 import { useQuasar } from 'quasar';
-import { useCartStore } from '../Store/useCartStore'; //
-const cartStore = useCartStore();
-
+import { useCartStore } from '../Store/useCartStore';
 
 const route = useRoute();
 const $q = useQuasar();
-const categoryId = ref(null);
+const cartStore = useCartStore();
+
 const products = ref([]);
-const categoria = ref({});
+const marca = ref({}); // Cambiado de 'categoria' a 'marca'
+const loading = ref(true); // Nuevo estado de carga
+const error = ref(null);   // Nuevo estado de error
 
 // Función para calcular el promedio de las reseñas
 const averageRating = (reviews) => {
@@ -69,46 +80,57 @@ const averageRating = (reviews) => {
   return total / reviews.length;
 };
 
-const fetchProductsByCategoryPage = async (id) => {
+// Función para obtener los productos de la marca por ID
+const fetchProductsByBrandPage = async (id) => {
+  loading.value = true;
+  error.value = null; // Reiniciar error
+  products.value = []; // Limpiar productos anteriores
+
   try {
-    const response = await getData(`/producto/categoria/${id}`);
+    const response = await getData(`/producto/marca/${id}`); // Ajusta la ruta a tu API de productos por marca
     if (Array.isArray(response)) {
       products.value = response;
     } else {
       products.value = [];
       $q.notify({
         type: 'warning',
-        message: 'No se encontraron productos para esta categoría.',
+        message: 'No se encontraron productos para esta marca o el formato de datos es incorrecto.',
       });
     }
-  } catch (error) {
-    console.error('Error al obtener productos por categoría:', error);
+  } catch (err) { // Usar 'err' para diferenciar del 'error' ref
+    console.error('Error al obtener productos por marca:', err);
+    error.value = 'Ocurrió un error al cargar los productos de esta marca.';
     $q.notify({
       type: 'negative',
-      message: 'Ocurrió un error al cargar los productos de esta categoría.',
+      message: error.value,
     });
+  } finally {
+    loading.value = false;
   }
 };
 
-const fetchCategoria = async (id) => {
+// Función para obtener los detalles de la marca por ID
+const fetchMarca = async (id) => {
   try {
-    const response = await getData(`/categoria/${id}`);
-    if (response && response.name) {
-      categoria.value = response;
+    const response = await getData(`/marca/${id}`); // Ajusta la ruta a tu API de marca por ID
+    if (response && response.nombre) { // Asegúrate de que el campo sea 'nombre' si tu API lo devuelve así
+      marca.value = { name: response.nombre, _id: response._id }; // Almacena el nombre y el _id
     } else {
-      categoria.value = { name: 'Sin nombre' };
+      marca.value = { name: 'Marca Desconocida', _id: id }; // Fallback
+      console.warn(`No se encontró el nombre para la marca con ID: ${id}`);
     }
-  } catch (error) {
-    console.error('Error al obtener categoría:', error);
+  } catch (err) { // Usar 'err' para diferenciar del 'error' ref
+    console.error('Error al obtener marca:', err);
     $q.notify({
       type: 'negative',
-      message: 'Error al cargar la categoría.',
+      message: 'Error al cargar los detalles de la marca.',
     });
+    marca.value = { name: 'Error al Cargar Marca', _id: id }; // Otro fallback en caso de error
   }
 };
 
 const agregarAlCarrito = (product) => {
-  const cantidadSeleccionada = 1; // o puedes agregar lógica para seleccionar cantidad más adelante
+  const cantidadSeleccionada = 1;
 
   if (!product) {
     $q.notify({
@@ -143,7 +165,6 @@ const agregarAlCarrito = (product) => {
     return;
   }
 
-  // Agregar al carrito (asegúrate de tener definido useCartStore correctamente)
   cartStore.addItem({
     id: product._id,
     nombre: product.nombre,
@@ -161,20 +182,18 @@ const agregarAlCarrito = (product) => {
   });
 };
 
-
-
 onMounted(() => {
-  const id = route.params.id;
+  const id = route.params.id; // El ID de la marca viene de la ruta /vistamarca/:id
   if (id) {
-    fetchCategoria(id);
-    fetchProductsByCategoryPage(id);
+    fetchMarca(id); // Obtener los detalles (nombre) de la marca
+    fetchProductsByBrandPage(id); // Obtener los productos de esa marca
   }
 });
 
 watch(() => route.params.id, (newId, oldId) => {
   if (newId && newId !== oldId) {
-    fetchCategoria(newId);
-    fetchProductsByCategoryPage(newId);
+    fetchMarca(newId); // Re-obtener los detalles de la marca si el ID cambia
+    fetchProductsByBrandPage(newId); // Re-obtener los productos si el ID cambia
   }
 });
 </script>
@@ -183,5 +202,16 @@ watch(() => route.params.id, (newId, oldId) => {
 .my-card {
   width: 100%;
   max-width: 300px;
+  /* Añadimos estilos para consistencia */
+  display: flex;
+  flex-direction: column;
+}
+
+.my-card .q-card-section {
+  flex-grow: 1; /* Permite que la sección se expanda */
+}
+
+.my-card .q-card-actions {
+  margin-top: auto; /* Mueve las acciones a la parte inferior */
 }
 </style>

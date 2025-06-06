@@ -152,6 +152,7 @@ import { useCartStore } from "../Store/useCartStore";
 import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
 import { QLayout, QPageContainer, QPage, useQuasar } from "quasar"; // Importa useQuasar
+import { getData } from "../Services/jook";
 
 const cartStore = useCartStore();
 const router = useRouter();
@@ -276,8 +277,19 @@ const renderPayPalButtons = () => {
             textColor: "white",
             icon: "done",
           });
-          console.log("Pago exitoso:", details);
-          cartStore.clearCart(); // Clear the cart after successful payment
+          console.log("Pago exitoso:", details)
+
+          async function saveOrder() {
+            try {
+              const response = await getData("")
+            } catch (error) {
+              
+            }
+            console.log("Guardando la orden en la base de datos...");
+            // Simulación de guardado exitoso
+            return new Promise((resolve) => setTimeout(resolve, 1000));
+          }
+          cartStore.clearCart(); 
           router.push("/gracias"); // Redirect to a thank you page
         } catch (error) {
           console.error("Error al capturar el pago:", error);

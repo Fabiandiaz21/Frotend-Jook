@@ -2,8 +2,8 @@
   <q-page class="q-pa-md">
     <div v-if="loading" class="text-center q-py-lg">
       <q-spinner-dots color="primary" size="3em" />
-      <div class="q-mt-md">Cargando productos de {{ marcaSeleccionada }}...</div>
-    </div>
+      <div class="q-mt-md">Cargando productos de {{ marcaSeleccionada || 'la marca' }}...</div>
+      </div>
 
     <div v-else-if="error" class="text-center q-py-lg text-negative">
       <q-icon name="error" size="2em" />
@@ -18,7 +18,7 @@
             <q-img :src="producto.images[0] || 'https://via.placeholder.com/300'" :ratio="16 / 9" />
             <q-card-section>
               <div class="text-h6">{{ producto.nombre }}</div>
-              <div class="text-subtitle2">{{ producto.marca }}</div>
+              <div class="text-subtitle2">{{ producto.marca.nombre }}</div>
               <div class="text-body1 text-weight-bold">${{ producto.price }}</div>
             </q-card-section>
             <q-card-actions align="right">
@@ -36,39 +36,50 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'; // Importa 'watch' para reaccionar a cambios en la URL
+import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { getData } from '../services/jook'; // Asegúrate de que la ruta sea correcta
-import { useCartStore } from '../Store/useCartStore'; //
-const cartStore = useCartStore();
+import { getData } from '../services/jook';
+import { useCartStore } from '../Store/useCartStore';
 
-const route = useRoute(); // Instancia para acceder a los parámetros de la ruta
-const router = useRouter(); // Instancia para la navegación
-const $q = useQuasar(); // Instancia para las notificaciones de Quasar
+const cartStore = useCartStore();
+const route = useRoute();
+const router = useRouter();
+const $q = useQuasar();
 
 const productos = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const marcaSeleccionada = ref(''); // Para mostrar el nombre de la marca en el título
 
-// Función para obtener los productos de la API por marca
-const fetchProductosPorMarca = async (marca) => {
+// Función para obtener los productos y el nombre de la marca por ID
+const fetchProductosYMarca = async (marcaId) => {
   loading.value = true;
   error.value = null;
   productos.value = []; // Limpiar productos anteriores
+  marcaSeleccionada.value = ''; // Limpiar el nombre de la marca también
 
-  if (!marca) {
-    error.value = "Nombre de marca no proporcionado en la URL.";
+  if (!marcaId) {
+    error.value = "ID de marca no proporcionado en la URL.";
     loading.value = false;
     return;
   }
 
   try {
-    // Aquí es donde usas la ruta de tu API para obtener productos por marca
-    // Ejemplo: /api/producto/marca/MSI
-    const response = await getData(`/producto/marca/${marca}`);
-    console.log("respuesta", response);
+    // 1. Intentar obtener los detalles de la marca para su nombre
+    // Asumiendo que tienes un endpoint como /marca/:id que devuelve { _id: ..., nombre: '...', ... }
+    const brandDetails = await getData(`/producto/marca/${marcaId}`);
+    if (brandDetails && brandDetails.nombre) {
+      marcaSeleccionada.value = brandDetails.nombre; // Establecer el nombre real de la marca
+    } else {
+      // Si no se encuentra el nombre, se puede mostrar el ID o un mensaje genérico
+      console.warn(`No se encontró el nombre para la marca con ID: ${marcaId}`);
+      marcaSeleccionada.value = `Marca con ID: ${marcaId}`; // Mostrar el ID como fallback
+    }
+
+    // 2. Obtener los productos de esa marca
+    // Asegúrate de que tu API /producto/marca/ espera el ID de la marca aquí
+    const response = await getData(`/producto/marca/${marcaId}/productos`);
 
     if (Array.isArray(response)) {
       productos.value = response;
@@ -78,10 +89,9 @@ const fetchProductosPorMarca = async (marca) => {
       error.value = "Formato de datos incorrecto recibido de la API.";
     }
   } catch (err) {
-    console.error('Error al cargar productos por marca:', err);
-    // Verifica si el error es un 404 (no encontrado) o un error general
+    console.error('Error al cargar productos o la marca:', err);
     if (err.response && err.response.status === 404) {
-      error.value = `No se encontraron productos para la marca "${marca}".`;
+      error.value = `No se encontraron productos para la marca "${marcaSeleccionada.value}" (ID: ${marcaId}).`;
     } else {
       error.value = 'Error al cargar los productos de la marca.';
     }
@@ -93,21 +103,18 @@ const fetchProductosPorMarca = async (marca) => {
 
 // Función para navegar a la vista de detalle del producto
 const viewProduct = (productId) => {
-  router.push(`/vistap/${productId}`); // Ajusta esta ruta si es diferente
+  router.push(`/vistap/${productId}`);
 };
 
-// Observar cambios en el parámetro 'marca' de la URL
-// Esto es útil si el usuario navega entre marcas sin recargar la página completa
-watch(() => route.params.marca, (newMarca) => {
-  if (newMarca) {
-    marcaSeleccionada.value = newMarca;
-    fetchProductosPorMarca(newMarca);
+// Observar cambios en el parámetro 'id' de la URL (desde la ruta /vistamarca/:id)
+watch(() => route.params.id, (newBrandId) => {
+  if (newBrandId) {
+    fetchProductosYMarca(newBrandId); // Llama a la nueva función con el ID
   }
 }, { immediate: true }); // 'immediate: true' para que se ejecute la primera vez que se monta
 
-
 const agregarAlCarrito = (product) => {
-  const cantidadSeleccionada = 1; // o puedes agregar lógica para seleccionar cantidad más adelante
+  const cantidadSeleccionada = 1;
 
   if (!product) {
     $q.notify({
@@ -142,7 +149,6 @@ const agregarAlCarrito = (product) => {
     return;
   }
 
-  // Agregar al carrito (asegúrate de tener definido useCartStore correctamente)
   cartStore.addItem({
     id: product._id,
     nombre: product.nombre,
@@ -159,9 +165,24 @@ const agregarAlCarrito = (product) => {
     timeout: 2000,
   });
 };
-
-
 </script>
+
+<style scoped>
+/* Estilos específicos para este componente si los necesitas */
+.q-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.q-card-section {
+  flex-grow: 1;
+}
+
+.q-card-actions {
+  margin-top: auto;
+}
+</style>
 
 <style scoped>
 /* Estilos específicos para este componente si los necesitas */

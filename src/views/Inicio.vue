@@ -277,16 +277,19 @@ const brandChunks = computed(() => {
   return chunks;
 });
 
+// ...
 const fetchBrands = async () => {
   try {
-    const response = await getData('/producto/marcas');
+    const response = await getData('/marca');
     if (Array.isArray(response)) {
-      const uniqueBrands = [...new Set(response.filter(Boolean))];
-
-      brands.value = uniqueBrands.map(brandName => ({
-        name: brandName,
-        image: 'https://cdn.quasar.dev/img/material.png' // Default image for brands
-      }));
+      brands.value = response
+        .filter(brand => brand !== null && brand !== undefined)
+        .map(brand => ({
+          // Asegúrate de incluir el _id (o el campo que represente el ID único)
+          _id: brand._id, // Asumiendo que tu API devuelve _id para marcas
+          name: brand.nombre,
+          image: brand.image || 'https://cdn.quasar.dev/img/material.png'
+        }));
 
       console.log('Marcas procesadas para el carrusel:', brands.value);
     } else {
@@ -298,10 +301,11 @@ const fetchBrands = async () => {
     $q.notify({ type: 'negative', message: 'Error al cargar marcas para el carrusel' });
   }
 };
+// ...
 
 const selectBrand = (brand) => {
-  if (brand && brand.name) {
-    router.push(`/vistamarca/${brand.name}`);
+  if (brand && brand._id) {
+    router.push(`/vistamarca/${brand._id}`);
   } else {
     console.warn('La marca no tiene un nombre válido:', brand);
   }

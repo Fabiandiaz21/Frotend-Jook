@@ -23,20 +23,21 @@
           <div v-if="searchQuery" style="position: absolute; width: 100%; z-index: 10; top: 100%;">
             <q-list v-if="searchResults.length > 0"
               class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list text-black">
-              <q-item clickable v-for="item in searchResults" :key="item._id || item.nombre || item.name"
+              <q-item clickable v-for="item in sortedSearchResults" :key="item._id || item.nombre || item.name"
                 @click="handleItemClick(item)">
                 <q-item-section>
                   <q-item-label v-if="item.tipoResultado === 'producto'">
-                    🛍 Producto: {{ item.nombre || '[sin nombre]' }} 
+                    📦 Producto: {{ item.nombre || '[sin nombre]' }}
                   </q-item-label>
                   <q-item-label v-else-if="item.tipoResultado === 'marca'">
-                    🏷 Marca: {{ item.nombre || '[sin nombre]' }}
+                    🏷️ Marca: {{ item.nombre || '[sin nombre]' }}
                   </q-item-label>
                   <q-item-label v-else-if="item.tipoResultado === 'categoria'">
-                    📂 Categoría: {{ item.name || item.nombre || '[sin nombre]' }} 
+                    📂 Categoría: {{ item.name || item.nombre || '[sin nombre]' }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
+
             </q-list>
             <div v-else class="q-pa-md bg-white rounded-borders shadow-1 q-mt-sm text-black">
               No se encontraron resultados para "{{ searchQuery }}"
@@ -46,7 +47,15 @@
 
         <div class="flex items-center">
           <q-btn flat round dense icon="favorite_border" @click="$router.push('/favoritos')" class="q-mr-sm btn" />
-          <q-btn flat round dense icon="shopping_cart" @click="$router.push('/carrito')" class="q-mr-sm btn" />
+          <div class="q-pa-md">
+    <div class="cart-button-container">
+      <q-btn  flat round dense icon="shopping_cart" @click="$router.push('/carrito')" class="q-mr-sm btn" />
+      <q-badge v-if="cartStore.items.length > 0" floating color="red" rounded class="cart-badge">
+        {{ cartStore.items.length }}
+      </q-badge>
+    </div>
+
+    </div>
           <q-btn v-if="isLoggedIn" round flat dense icon="account_circle" class="btn">
             <q-menu>
               <q-list bordered style="min-width: 170px">
@@ -94,7 +103,7 @@
       </q-toolbar>
 
       <q-toolbar class="custom-header text-white q-px-md q-py-xs lt-sm">
-        </q-toolbar>
+      </q-toolbar>
 
     </q-header>
     <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
@@ -178,8 +187,20 @@ const router = useRouter();
 const route = useRoute(); // Instancia useRoute
 const $q = useQuasar();
 const searchResults = ref([]);
+import { useCartStore } from '../Store/useCartStore';
+const cartStore = useCartStore();
 const authStore = useAuthStore();
 const isLoggedIn = computed(() => authStore.isLoggedIn());
+
+
+
+
+const sortedSearchResults = computed(() => {
+  return [...searchResults.value].sort((a, b) => {
+    const order = { categoria: 0, marca: 1, producto: 2 };
+    return (order[a.tipoResultado] ?? 99) - (order[b.tipoResultado] ?? 99);
+  });
+});
 
 // Estado para controlar la apertura/cierre del q-drawer
 const leftDrawerOpen = ref(false);
@@ -205,7 +226,8 @@ const handleSearch = async (newValue) => {
 
           // Marcas sugeridas (como strings)
           ...sugerenciasMarca.map(m => ({
-            nombre: m,
+            _id: m._id,
+            nombre: m.nombre,
             tipoResultado: 'marca'
           })),
 
@@ -231,12 +253,11 @@ const handleSearch = async (newValue) => {
   }
 };
 
-
 const handleItemClick = (item) => {
   if (item.tipoResultado === 'producto' && item._id) {
     router.push(`/vistaP/${item._id}`);
-  } else if (item.tipoResultado === 'marca') {
-    router.push({ name: 'vistamarca', params: { marca: item.nombre } });
+  } else if (item.tipoResultado === 'marca' && item._id) {
+    router.push({ name: 'vistamarca', params: { id: item._id } });
   } else if (item.tipoResultado === 'categoria' && item._id) {
     router.push(`/vistacategoria/${item._id}`);
   } else {
@@ -245,6 +266,7 @@ const handleItemClick = (item) => {
 
   searchQuery.value = '';
 };
+
 
 
 const logout = () => {
@@ -305,6 +327,28 @@ onMounted(() => {
 <style lang="scss">
 .black {
   color: #212121;
+}
+
+
+.cart-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.cart-badge {
+  position: absolute;
+  top: 1px;      /* Ajusta este valor (disminúyelo para subir la burbuja) */
+  right: 1px;    /* Ajusta este valor (disminúyelo para acercar la burbuja al icono) */
+  transform: translate(5%, -30%);
+  font-size: 0.7em;
+  padding: 3px 6px;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
 }
 
 #titulo {
