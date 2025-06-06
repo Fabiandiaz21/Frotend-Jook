@@ -47,7 +47,15 @@
 
         <div class="flex items-center">
           <q-btn flat round dense icon="favorite_border" @click="$router.push('/favoritos')" class="q-mr-sm btn" />
-          <q-btn flat round dense icon="shopping_cart" @click="$router.push('/carrito')" class="q-mr-sm btn" />
+          <div class="q-pa-md">
+    <div class="cart-button-container">
+      <q-btn  flat round dense icon="shopping_cart" @click="$router.push('/carrito')" class="q-mr-sm btn" />
+      <q-badge v-if="cartStore.items.length > 0" floating color="red" rounded class="cart-badge">
+        {{ cartStore.items.length }}
+      </q-badge>
+    </div>
+
+    </div>
           <q-btn v-if="isLoggedIn" round flat dense icon="account_circle" class="btn">
             <q-menu>
               <q-list bordered style="min-width: 170px">
@@ -179,6 +187,8 @@ const router = useRouter();
 const route = useRoute(); // Instancia useRoute
 const $q = useQuasar();
 const searchResults = ref([]);
+import { useCartStore } from '../Store/useCartStore';
+const cartStore = useCartStore();
 const authStore = useAuthStore();
 const isLoggedIn = computed(() => authStore.isLoggedIn());
 
@@ -317,6 +327,28 @@ onMounted(() => {
 <style lang="scss">
 .black {
   color: #212121;
+}
+
+
+.cart-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.cart-badge {
+  position: absolute;
+  top: 1px;      /* Ajusta este valor (disminúyelo para subir la burbuja) */
+  right: 1px;    /* Ajusta este valor (disminúyelo para acercar la burbuja al icono) */
+  transform: translate(5%, -30%);
+  font-size: 0.7em;
+  padding: 3px 6px;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
 }
 
 #titulo {

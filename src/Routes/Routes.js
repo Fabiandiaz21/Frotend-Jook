@@ -13,7 +13,8 @@ import Favoritos from '../views/Favoritos.vue';
 import VistaCategoria from '../views/VistaCategoria.vue';
 import VistaMarca from '../views/VistaMarca.vue';
 import Carrito from '../views/Carrito.vue';
-import { useAuthStore } from '../Store/useAunt'; 
+import { useAuthStore } from '../Store/useAunt';
+import FormularioCompra from '../views/FormularioCompra.vue';
 
 const routes = [
   {
@@ -27,7 +28,8 @@ const routes = [
       { path: '/favoritos', component: Favoritos, name: 'favoritos'}, 
       { path: '/vistacategoria/:id', component: VistaCategoria, name: 'vistacategoria'}, 
       { path: '/vistamarca/:id', component: VistaMarca, name: 'vistamarca'}, 
-      { path: '/carrito/', component: Carrito, name: 'carrito'}, 
+      { path: '/carrito/', component: Carrito, name: 'carrito'},
+      {path: '/formularioCompra/', component: FormularioCompra, name: 'formularioCompra' }, // Ruta para el formulario de compra
     ],
   },
   {

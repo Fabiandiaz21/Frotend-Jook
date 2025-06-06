@@ -29,6 +29,13 @@
                 <button @click="cartStore.removeItem(item.id)" class="remove-item-button">Eliminar</button>
               </div>
             </div>
+            <p>Subtotal: ${{ (item.precio * item.cantidad).toFixed(2) }}</p>
+            <button
+              @click="cartStore.removeItem(item.id)"
+              class="remove-item-button"
+            >
+              Eliminar
+            </button>
           </div>
         </div>
       </div>
@@ -38,7 +45,7 @@
           <h2>Resumen del Carrito</h2>
           <p>Total de ítems: {{ cartStore.totalItems }}</p>
           <p class="total-price">Total a pagar: <strong>${{ cartStore.totalPrice.toFixed(2) }}</strong></p>
-          <button class="checkout-button">Proceder al Pago</button>
+          <q-btn class="checkout-button" to="/formularioCompra/">Proceder al pago</q-btn>
         </div>
       </div>
     </div>

@@ -20,7 +20,7 @@
         <p class="ventas">Ventas: (próximamente) | Vendido por <strong>Jook</strong></p>
         <div class="etiqueta" v-if="product.categoryId">Categoría: {{ product.categoryId.name }}</div>
         <div class="precio">
-          <span class="actual">${{ product.price }}</span>
+          <span class="actual">${{ formatNumberWithThousandsSeparator(product.price) }}</span>
         </div>
         <p class="envio" v-if="product.estado === 'activo'">✓ Producto disponible</p>
         <label v-if="product.subtipo">
@@ -28,8 +28,8 @@
           <input type="text" :value="product.subtipo" readonly />
         </label>
         <p>Disponibles: {{ product.stock }} unidades</p>
-        <p v-if="product.marca">Marca: {{ product.marca }}</p>
-        <p v-if="product.tipo">Tipo: {{ product.tipo }}</p>
+        <p v-if="product.marca.nombre">Marca: {{ product.marca.nombre }}</p>
+        <p v-if="product.tipo.nombre">Tipo: {{ product.tipo.nombre }}</p>
         <button class="boton-carrito" v-if="product.estado === 'activo'" @click="agregarAlCarrito">Añadir al
           carrito</button>
         <button class="boton-carrito" v-else disabled>Producto inactivo</button>
@@ -118,6 +118,7 @@ import { getData, postData, deleteData } from '../services/jook';
 import { useAuthStore } from '../Store/useAunt';
 import { useCartStore } from '../Store/useCartStore';
 import { useQuasar } from 'quasar';
+import { formatNumberWithThousandsSeparator } from '../utils/utils';
 
 const route = useRoute();
 const productId = ref(route.params.id);
