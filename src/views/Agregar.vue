@@ -844,12 +844,12 @@ const fetchProductos = async () => {
     // En tu función fetchProductos:
     productos.value = response.map(producto => {
       const marcaObj = producto.marca && typeof producto.marca === 'object'
-        ? { _id: producto.marca._id, nombre: producto.marca.name, imagen: producto.marca.image } // <--- CAMBIO AQUÍ: producto.marca.name
+        ? { _id: producto.marca._id, nombre: producto.marca.nombre, imagen: producto.marca.image } // <--- CAMBIO AQUÍ: producto.marca.name
         : { _id: producto.marca || null, nombre: 'N/A', imagen: null };
 
       const tipoObj = producto.tipo && typeof producto.tipo === 'object'
-        ? { _id: producto.tipo._id, name: producto.tipo.name }
-        : { _id: producto.tipo || null, name: 'N/A' };
+        ? { _id: producto.tipo._id, nombre: producto.tipo.nombre }
+        : { _id: producto.tipo || null, nombre: 'N/A' };
 
       return {
         ...producto,
