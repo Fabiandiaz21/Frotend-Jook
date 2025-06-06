@@ -18,7 +18,7 @@
             <q-img :src="producto.images[0] || 'https://via.placeholder.com/300'" :ratio="16 / 9" />
             <q-card-section>
               <div class="text-h6">{{ producto.nombre }}</div>
-              <div class="text-subtitle2">{{ producto.marca }}</div>
+              <div class="text-subtitle2">{{ producto.marca.nombre }}</div>
               <div class="text-body1 text-weight-bold">${{ producto.price }}</div>
             </q-card-section>
             <q-card-actions align="right">
@@ -68,7 +68,7 @@ const fetchProductosYMarca = async (marcaId) => {
   try {
     // 1. Intentar obtener los detalles de la marca para su nombre
     // Asumiendo que tienes un endpoint como /marca/:id que devuelve { _id: ..., nombre: '...', ... }
-    const brandDetails = await getData(`/marca/${marcaId}`);
+    const brandDetails = await getData(`/producto/marca/${marcaId}`);
     if (brandDetails && brandDetails.nombre) {
       marcaSeleccionada.value = brandDetails.nombre; // Establecer el nombre real de la marca
     } else {
@@ -79,7 +79,7 @@ const fetchProductosYMarca = async (marcaId) => {
 
     // 2. Obtener los productos de esa marca
     // Asegúrate de que tu API /producto/marca/ espera el ID de la marca aquí
-    const response = await getData(`/producto/marca/${marcaId}`);
+    const response = await getData(`/producto/marca/${marcaId}/productos`);
 
     if (Array.isArray(response)) {
       productos.value = response;
