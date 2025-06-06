@@ -26,7 +26,7 @@ const routes = [
       { path: '/vistap/:id', component: Vistap, name: 'vistap', props: true }, 
       { path: '/favoritos', component: Favoritos, name: 'favoritos'}, 
       { path: '/vistacategoria/:id', component: VistaCategoria, name: 'vistacategoria'}, 
-      { path: '/vistamarca/:marca', component: VistaMarca, name: 'vistamarca'}, 
+      { path: '/vistamarca/:id', component: VistaMarca, name: 'vistamarca'}, 
       { path: '/carrito/', component: Carrito, name: 'carrito'}, 
     ],
   },
