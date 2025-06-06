@@ -13,7 +13,8 @@ import Favoritos from '../views/Favoritos.vue';
 import VistaCategoria from '../views/VistaCategoria.vue';
 import VistaMarca from '../views/VistaMarca.vue';
 import Carrito from '../views/Carrito.vue';
-import { useAuthStore } from '../Store/useAunt'; 
+import { useAuthStore } from '../Store/useAunt';
+import FormularioCompra from '../views/FormularioCompra.vue';
 
 const routes = [
   {
@@ -23,11 +24,12 @@ const routes = [
       { path: '', component: Inicio, name: 'Inicio' },
       { path: '/perfil', component: Perfl, name: 'Perfil' },
       { path: '/productos', component: Productos, name: 'Productos' },
-      { path: '/vistap/:id', component: Vistap, name: 'vistap', props: true }, 
-      { path: '/favoritos', component: Favoritos, name: 'favoritos'}, 
-      { path: '/vistacategoria/:id', component: VistaCategoria, name: 'vistacategoria'}, 
-      { path: '/vistamarca/:marca', component: VistaMarca, name: 'vistamarca'}, 
-      { path: '/carrito/', component: Carrito, name: 'carrito'}, 
+      { path: '/vistap/:id', component: Vistap, name: 'vistap', props: true },
+      { path: '/favoritos', component: Favoritos, name: 'favoritos' },
+      { path: '/vistacategoria/:id', component: VistaCategoria, name: 'vistacategoria' },
+      { path: '/vistamarca/:marca', component: VistaMarca, name: 'vistamarca' },
+      { path: '/carrito/', component: Carrito, name: 'carrito' },
+      { path: '/formularioCompra/', component: FormularioCompra, name: 'formularioCompra' },
     ],
   },
   {
