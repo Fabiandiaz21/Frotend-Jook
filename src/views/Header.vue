@@ -23,20 +23,21 @@
           <div v-if="searchQuery" style="position: absolute; width: 100%; z-index: 10; top: 100%;">
             <q-list v-if="searchResults.length > 0"
               class="bg-white rounded-borders shadow-1 q-mt-sm search-results-list text-black">
-              <q-item clickable v-for="item in searchResults" :key="item._id || item.nombre || item.name"
+              <q-item clickable v-for="item in sortedSearchResults" :key="item._id || item.nombre || item.name"
                 @click="handleItemClick(item)">
                 <q-item-section>
                   <q-item-label v-if="item.tipoResultado === 'producto'">
-                    🛍 Producto: {{ item.nombre || '[sin nombre]' }} 
+                    📦 Producto: {{ item.nombre || '[sin nombre]' }}
                   </q-item-label>
                   <q-item-label v-else-if="item.tipoResultado === 'marca'">
-                    🏷 Marca: {{ item.nombre || '[sin nombre]' }}
+                    🏷️ Marca: {{ item.nombre || '[sin nombre]' }}
                   </q-item-label>
                   <q-item-label v-else-if="item.tipoResultado === 'categoria'">
-                    📂 Categoría: {{ item.name || item.nombre || '[sin nombre]' }} 
+                    📂 Categoría: {{ item.name || item.nombre || '[sin nombre]' }}
                   </q-item-label>
                 </q-item-section>
               </q-item>
+
             </q-list>
             <div v-else class="q-pa-md bg-white rounded-borders shadow-1 q-mt-sm text-black">
               No se encontraron resultados para "{{ searchQuery }}"
@@ -94,7 +95,7 @@
       </q-toolbar>
 
       <q-toolbar class="custom-header text-white q-px-md q-py-xs lt-sm">
-        </q-toolbar>
+      </q-toolbar>
 
     </q-header>
     <q-drawer v-model="leftDrawerOpen" side="left" overlay elevated>
@@ -181,6 +182,16 @@ const searchResults = ref([]);
 const authStore = useAuthStore();
 const isLoggedIn = computed(() => authStore.isLoggedIn());
 
+
+
+
+const sortedSearchResults = computed(() => {
+  return [...searchResults.value].sort((a, b) => {
+    const order = { categoria: 0, marca: 1, producto: 2 };
+    return (order[a.tipoResultado] ?? 99) - (order[b.tipoResultado] ?? 99);
+  });
+});
+
 // Estado para controlar la apertura/cierre del q-drawer
 const leftDrawerOpen = ref(false);
 const toggleLeftDrawer = () => {
@@ -205,7 +216,8 @@ const handleSearch = async (newValue) => {
 
           // Marcas sugeridas (como strings)
           ...sugerenciasMarca.map(m => ({
-            nombre: m,
+            _id: m._id,
+            nombre: m.nombre,
             tipoResultado: 'marca'
           })),
 
@@ -231,12 +243,11 @@ const handleSearch = async (newValue) => {
   }
 };
 
-
 const handleItemClick = (item) => {
   if (item.tipoResultado === 'producto' && item._id) {
     router.push(`/vistaP/${item._id}`);
-  } else if (item.tipoResultado === 'marca') {
-    router.push({ name: 'vistamarca', params: { marca: item.nombre } });
+  } else if (item.tipoResultado === 'marca' && item._id) {
+    router.push({ name: 'vistamarca', params: { id: item._id } });
   } else if (item.tipoResultado === 'categoria' && item._id) {
     router.push(`/vistacategoria/${item._id}`);
   } else {
@@ -245,6 +256,7 @@ const handleItemClick = (item) => {
 
   searchQuery.value = '';
 };
+
 
 
 const logout = () => {

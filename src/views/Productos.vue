@@ -11,13 +11,13 @@
             </option>
           </template>
           <template v-else-if="filterGroup.label === 'Marca' || filterGroup.label === 'Tipo de uso'">
-            <option v-for="option in filterGroup.options" :key="option" :value="option">
-              {{ option }}
+            <option v-for="option in filterGroup.options" :key="option.nombre" :value="option.nombre">
+              {{ option.nombre }}
             </option>
           </template>
           <template v-else>
             <option v-for="option in filterGroup.options" :key="option" :value="option">
-              {{ option }}
+              {{ option.nombre }}
             </option>
           </template>
         </select>
@@ -148,7 +148,7 @@ const applyFilters = async () => {
     const url = `/producto/search?${params.toString()}`;
     console.log("URL de búsqueda:", url); // Para depurar
     const data = await getData(url);
-    products.value = data.productos; 
+    products.value = data.productos;
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
     products.value = [];
