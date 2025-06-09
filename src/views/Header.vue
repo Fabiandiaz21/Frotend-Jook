@@ -5,8 +5,8 @@
         <q-btn flat round dense icon="menu" @click="toggleLeftDrawer" class="lt-sm q-mr-sm" />
 
         <q-toolbar-title class="flex items-center" id="titulo" style="min-width: 150px; color: white">
-          <q-avatar size="36px" class="bg-yellow-8 text-white">
-            <q-icon name="shopping_cart" />
+             <q-avatar size="55px" class="bg-yellow-8 text-white" style="margin-top: 15px;">
+            <img src = "https://res.cloudinary.com/dvqn0avdc/image/upload/v1749428022/WhatsApp_Image_2025-06-08_at_6.37.31_PM_iyksbv.jpg">
           </q-avatar>
           <span class="q-ml-sm text-weight-bold">Jook</span>
         </q-toolbar-title>

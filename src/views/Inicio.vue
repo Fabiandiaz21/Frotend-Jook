@@ -27,10 +27,10 @@
         </q-card-section>
       </q-card>
 
-      <q-card class="service-card bg-brown-1">
+         <q-card class="service-card bg-brown-1" @click="router.push('/productos')" style="cursor:pointer;">
         <q-card-section class="text-center">
-          <q-icon name="library_books" size="xl" color="brown-8" class="service-icon" />
-          <div class="text-h4 q-mt-md text-brown-10">Catálogo Completo</div>
+          <q-icon name="library_books" size="xl" color="brown-8" class="service-icon"/>
+          <div class="text-h4 q-mt-md text-brown-10">Catálogo Completo </div>
           <p class="text-h6 text-brown-9 q-mt-sm">Explora todos nuestros productos tecnológicos</p>
         </q-card-section>
       </q-card>
