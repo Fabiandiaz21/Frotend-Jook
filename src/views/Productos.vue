@@ -1,81 +1,121 @@
 <template>
-  <div class="page-wrapper">
-    <div class="filter-bar">
-      <div v-for="filterGroup in filterOptions" :key="filterGroup.label" class="filter-select">
-        <label :for="filterGroup.label">{{ filterGroup.label }}</label>
-        <select :id="filterGroup.label" v-model="selectedFilters[filterGroup.label]">
-          <option value="">Todos</option>
-          <template v-if="filterGroup.label === 'Categoría'">
-            <option v-for="option in filterGroup.options" :key="option._id" :value="option._id">
-              {{ option.name }}
-            </option>
-          </template>
-          <template v-else-if="filterGroup.label === 'Marca' || filterGroup.label === 'Tipo de uso'">
-            <option v-for="option in filterGroup.options" :key="option?.nombre" :value="option?.nombre">
-              {{ option?.nombre }}
-            </option>
-          </template>
-          <template v-else>
-            <option v-for="option in filterGroup.options" :key="option" :value="option">
-              {{ option.nombre }}
-            </option>
-          </template>
-        </select>
+  <div class="products-page">
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="hero-content">
+        <h1>Nuestra Colección</h1>
+        <p>Descubre productos seleccionados con cuidado para ti</p>
       </div>
-      <button @click="applyFilters" class="search-button">Buscar</button>
     </div>
 
-    <div v-for="(carousel, index) in carouselsData" :key="index" class="carousel-container">
-      <div class="carousel">
-        <button class="carousel-btn left" @click="moveCarousel(index, 'left')">
-          &#9664;
-        </button>
+    <!-- Filter Section -->
+    <div class="filter-section">
+      <div class="filter-container">
+        <div v-for="filterGroup in filterOptions" :key="filterGroup.label" class="filter-group">
+          <q-select
+            outlined
+            :label="filterGroup.label"
+            v-model="selectedFilters[filterGroup.label]"
+            :options="filterGroup.options"
+            option-label="name"
+            option-value="_id"
+            color="brown-7"
+            class="filter-select"
+            dense
+          >
+            <template v-slot:option="scope">
+              <q-item v-bind="scope.itemProps">
+                <q-item-section>
+                  <q-item-label>{{ scope.opt.name || scope.opt }}</q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-select>
+        </div>
+        <q-btn 
+          label="Aplicar Filtros" 
+          color="brown-7" 
+          unelevated 
+          @click="applyFilters"
+          class="apply-btn"
+        />
+      </div>
+    </div>
 
-        <div class="carousel-items" :style="{ transform: 'translateX(' + carouselPositions[index] + 'px)' }"
-          ref="carousels">
-          <div class="carousel-item" v-for="(item, i) in carousel" :key="i">
-            <a :href="item.url" target="_blank">
-              <img :src="item.img" alt="Producto" class="product-img imagen-problematica"
-                style="width: 180px; height: 180px;">
-            </a>
-            <div class="product-info">
-              <p class="price">{{ item.price }}</p>
-              <p class="desc">{{ item.desc }}</p>
-              <p class="discount">{{ item.discount }}</p>
+
+
+    <!-- Products Grid -->
+    <div class="section-title">
+      <h2>Nuestros Productos</h2>
+      <q-separator color="brown-3" />
+    </div>
+
+    <div class="products-grid">
+      <q-card 
+        v-for="product in products" 
+        :key="product._id" 
+        class="product-card"
+      >
+        <router-link :to="`/vistap/${product._id}`">
+          <q-img
+            :src="product.images?.[0] || 'https://via.placeholder.com/300'"
+            :ratio="1"
+            class="product-img"
+            spinner-color="brown-6"
+          >
+            <template v-slot:error>
+              <div class="absolute-full flex flex-center bg-brown-1 text-brown-8">
+                Imagen no disponible
+              </div>
+            </template>
+          </q-img>
+        </router-link>
+
+        <q-card-section>
+          <div class="product-title">{{ product.nombre }}</div>
+          <div class="product-brand">{{ product.marca.nombre }}</div>
+          
+          <div class="row items-center justify-between q-mt-sm">
+            <div class="product-price text-brown-8">
+              ${{ formatNumberWithThousandsSeparator(product.price) }}
             </div>
+            <q-btn 
+              round 
+              flat 
+              color="brown-6" 
+              icon="shopping_cart" 
+              @click.stop="addToCart(product)"
+            />
           </div>
-        </div>
-
-        <button class="carousel-btn right" @click="moveCarousel(index, 'right')">
-          &#9654;
-        </button>
-      </div>
+        </q-card-section>
+      </q-card>
     </div>
 
-    <div class="all-products-container">
-      <h2>Productos Filtrados</h2>
-      <div class="product-grid">
-        <div v-for="product in products" :key="product._id" class="product-card">
-          <a :href="`/vistap/${product._id}`">
-            <img :src="product.images?.[0] || 'https://via.placeholder.com/200'" alt="Producto" class="product-img">
-          </a>
-          <div class="product-info">
-            <p class="price">{{ `$${formatNumberWithThousandsSeparator(product.price)}` }}</p>
-            <p class="desc">{{ product.nombre }}</p>
-          </div>
-        </div>
-        <p v-if="products.length === 0">No se encontraron productos con los filtros seleccionados.</p>
-      </div>
+    <!-- Empty State -->
+    <div v-if="products.length === 0" class="empty-state">
+      <q-icon name="search_off" size="xl" color="brown-4" />
+      <h3>No encontramos productos</h3>
+      <p>Intenta con otros filtros de búsqueda</p>
+      <q-btn 
+        label="Limpiar Filtros" 
+        color="brown-7" 
+        outline 
+        @click="clearFilters"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, nextTick } from 'vue';
-import { getData } from '../Services/jook.js'; // tu función para hacer GET
+import { ref, onMounted } from 'vue';
+import { getData } from '../Services/jook.js';
 import { formatNumberWithThousandsSeparator } from '../utils/utils.js';
+import { useCartStore } from '../Store/useCartStore';
+
+const cartStore = useCartStore();
 
 const search = ref('');
+const slide = ref(0);
 const selectedFilters = ref({
   'Ordenar por': '',
   'Categoría': '',
@@ -83,332 +123,334 @@ const selectedFilters = ref({
   'Precio': '',
   'Tipo de uso': ''
 });
+
 const filterOptions = ref([
   { label: 'Ordenar por', options: ['Destacados', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'] },
-  { label: 'Categoría', options: [] }, // Se llenará dinámicamente con objetos { _id, name }
-  { label: 'Marca', options: [] }, // Se llenará dinámicamente con strings
+  { label: 'Categoría', options: [] },
+  { label: 'Marca', options: [] },
   { label: 'Precio', options: ['Menos de $50', '$50 - $100', 'Más de $100'] },
-  { label: 'Tipo de uso', options: [] } // Se llenará dinámicamente
+  { label: 'Tipo de uso', options: [] }
 ]);
 
 const products = ref([]);
+const carouselsData = ref([[]]);
 
-// Datos y funciones de carrusel (mantén tu lógica existente)
-const carouselsData = ref([
-  // ... tus datos de carrusel ...
-]);
-const carouselPositions = ref([]);
-const carousels = ref([]);
-
-const moveCarousel = (index, direction) => {
-  // ... tu lógica de carrusel ...
+const addToCart = (product) => {
+  cartStore.addItem({
+    id: product._id,
+    nombre: product.nombre,
+    precio: product.price,
+    imagen: product.images?.[0],
+    cantidad: 1
+  });
 };
 
-// Función para obtener productos con filtros
 const applyFilters = async () => {
   try {
     const params = new URLSearchParams();
 
-    if (search.value) {
-      params.append('search', search.value);
-    }
+    if (search.value) params.append('search', search.value);
+    if (selectedFilters.value['Categoría']) params.append('categoria', selectedFilters.value['Categoría']._id || selectedFilters.value['Categoría']);
+    if (selectedFilters.value['Marca']) params.append('marca', selectedFilters.value['Marca'].nombre || selectedFilters.value['Marca']);
+    if (selectedFilters.value['Ordenar por']) params.append('sortBy', selectedFilters.value['Ordenar por']);
+    if (selectedFilters.value['Tipo de uso']) params.append('tipo', selectedFilters.value['Tipo de uso'].nombre || selectedFilters.value['Tipo de uso']);
 
-    if (selectedFilters.value['Categoría']) {
-      // Enviamos el _id de la categoría como 'categoria'
-      params.append('categoria', selectedFilters.value['Categoría']);
-    }
-    if (selectedFilters.value['Marca']) {
-      params.append('marca', selectedFilters.value['Marca']);
-    }
-    if (selectedFilters.value['Ordenar por']) {
-      params.append('sortBy', selectedFilters.value['Ordenar por']);
-    }
-    // Asegúrate de que el nombre del parámetro sea 'tipoUso' en el backend
-    if (selectedFilters.value['Tipo de uso']) {
-      params.append('tipo', selectedFilters.value['Tipo de uso']);
-    }
-
-    // Manejo del filtro de precio
     if (selectedFilters.value['Precio']) {
       switch (selectedFilters.value['Precio']) {
-        case 'Menos de $50':
-          params.append('precioMax', 50);
-          break;
+        case 'Menos de $50': params.append('precioMax', 50); break;
         case '$50 - $100':
           params.append('precioMin', 50);
           params.append('precioMax', 100);
           break;
-        case 'Más de $100':
-          params.append('precioMin', 100);
-          break;
+        case 'Más de $100': params.append('precioMin', 100); break;
       }
     }
 
-    // Asegúrate de que la URL base sea correcta, ej: '/api/productos/search'
-    // Si tu proxy o jook.js ya agrega '/api', entonces solo '/productos/search'
     const url = `/producto/search?${params.toString()}`;
-    console.log("URL de búsqueda:", url); // Para depurar
     const data = await getData(url);
-    products.value = data.productos;
+    products.value = data.productos || [];
   } catch (error) {
     console.error('Error al aplicar filtros:', error);
     products.value = [];
   }
 };
 
-// Función para cargar opciones de filtros dinámicamente
+const clearFilters = () => {
+  selectedFilters.value = {
+    'Ordenar por': '',
+    'Categoría': '',
+    'Marca': '',
+    'Precio': '',
+    'Tipo de uso': ''
+  };
+  applyFilters();
+};
+
 const loadFilterOptions = async () => {
   try {
-    // Cargar categorías
-    // Tu backend debería devolver [{ _id: '...', name: '...' }]
-    const categoriasCompletas = await getData('/categoria'); // Ajusta esta URL si tu ruta no es '/categoria' directamente
-    console.log('Datos brutos de categorías para filtro:', categoriasCompletas);
-    const categoriaFilter = filterOptions.value.find(f => f.label === 'Categoría');
-    if (categoriaFilter) {
-      categoriaFilter.options = categoriasCompletas;
-    }
+    const [categorias, marcas, tiposDeUso] = await Promise.all([
+      getData('/categoria'),
+      getData('/producto/marcas'),  
+      getData('/producto/tipos-de-uso')
+    ]);
 
-    // Cargar marcas
-    // Tu backend debería devolver ['Marca A', 'Marca B']
-    const marcas = await getData('/producto/marcas'); // Asumo que es '/productos/marcas'
-    console.log("respuesta marcas", marcas);
+    filterOptions.value = [
+      { label: 'Ordenar por', options: ['Destacados', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'] },
+      { label: 'Categoría', options: categorias },
+      { label: 'Marca', options: marcas.map(m => ({ nombre: m })) },
+      { label: 'Precio', options: ['Menos de $50', '$50 - $100', 'Más de $100'] },
+      { label: 'Tipo de uso', options: tiposDeUso.map(t => ({ nombre: t })) }
+    ];
 
-    const marcaFilter = filterOptions.value.find(f => f.label === 'Marca');
-    if (marcaFilter) {
-      marcaFilter.options = marcas;
-    }
-
-    // Cargar tipos de uso
-    // Tu backend debería devolver ['Gaming', 'Oficina', 'Hogar']
-    const tiposDeUso = await getData('/producto/tipos-de-uso'); // Asumo que es '/productos/tipos-de-uso'
-    console.log("respuesta de uso", tiposDeUso);
-    const tipoUsoFilter = filterOptions.value.find(f => f.label === 'Tipo de uso');
-    if (tipoUsoFilter) {
-      tipoUsoFilter.options = tiposDeUso;
-    }
-
+    await applyFilters();
   } catch (error) {
     console.error('Error al cargar opciones de filtros:', error);
   }
 };
 
-onMounted(async () => {
-  // Carga las opciones dinámicas de los filtros primero
-  await loadFilterOptions();
-  // Luego, carga los productos iniciales (sin filtros o con los predeterminados)
-  await applyFilters();
-
-
-  // Inicializa las posiciones del carrusel si es necesario
-  carouselPositions.value = carouselsData.value.map(() => 0);
+onMounted(() => {
+  loadFilterOptions();
 });
 </script>
 
 <style scoped>
-/* Agrega o modifica tus estilos CSS según sea necesario */
-.page-wrapper {
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f2f4f8;
+.products-page {
+  background-color: #f9f5f0;
+  min-height: 100vh;
 }
 
-.filter-bar {
+.hero-section {
+  height: 300px;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                  url('https://img.freepik.com/foto-gratis/arreglo-coleccion-estacionaria-moderna_23-2149309649.jpg?semt=ais_items_boosted&w=740');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.hero-content h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.filter-section {
+  background-color: #fff;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(139, 69, 19, 0.1);
+  margin-bottom: 30px;
+}
+
+.filter-container {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
-  margin-bottom: 30px;
-  padding: 20px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   align-items: flex-end;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 200px;
 }
 
 .filter-select {
-  display: flex;
-  flex-direction: column;
-  min-width: 180px;
-  transition: transform 0.3s ease;
+  background-color: #fff;
 }
 
-.filter-select:hover {
-  transform: scale(1.02);
+.apply-btn {
+  height: 40px;
 }
 
-.filter-select label {
-  font-weight: 600;
-  margin-bottom: 5px;
-  color: #333;
-  font-size: 0.95rem;
+.section-title {
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 20px;
 }
 
-.filter-select select {
-  padding: 10px;
-  border: 1px solid #dcdcdc;
-  border-radius: 6px;
-  font-size: 1rem;
-  background-color: #fdfdfd;
-  transition: border-color 0.3s;
+.section-title h2 {
+  font-size: 1.8rem;
+  color: #5d4037;
+  margin-bottom: 10px;
 }
 
-.filter-select select:focus {
-  border-color: #007bff;
-  outline: none;
-}
-
-.search-button {
-  padding: 12px 24px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.3s ease, transform 0.2s;
-}
-
-.search-button:hover {
-  background-color: #0056b3;
-  transform: translateY(-1px);
-}
-
-.carousel-container {
-  margin-bottom: 40px;
+.featured-carousel {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  padding: 0 20px;
 }
 
 .carousel {
-  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+}
+
+.slide-content {
   display: flex;
+  height: 100%;
   align-items: center;
-  overflow: hidden;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+  padding: 20px;
 }
 
-.carousel-btn {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  color: #007bff;
-  transition: color 0.3s ease;
-}
-
-.carousel-btn:hover {
-  color: #0056b3;
-}
-
-.carousel-items {
-  display: flex;
-  transition: transform 0.3s ease-in-out;
-  gap: 20px;
-}
-
-.carousel-item {
-  min-width: 200px;
-  max-width: 200px;
-  background-color: #fdfdfd;
-  border-radius: 10px;
-  overflow: hidden;
-  text-align: center;
-  padding: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.product-img {
-  width: 180px;
-  height: 180px;
+.featured-img {
+  width: 250px;
+  height: 250px;
   object-fit: cover;
   border-radius: 8px;
-  transition: transform 0.3s ease;
+  margin-right: 30px;
 }
 
-.carousel-item:hover .product-img {
-  transform: scale(1.05);
+.featured-info {
+  flex: 1;
+  color: #5d4037;
 }
 
-.product-info {
-  padding: 8px 0;
-}
-
-.product-info .price {
-  font-weight: bold;
-  color: #e44d26;
-  font-size: 1.1rem;
-}
-
-.product-info .desc {
-  font-size: 0.95rem;
-  color: #444;
-}
-
-.product-info .discount {
-  font-size: 0.85rem;
-  color: #28a745;
-}
-
-.all-products-container {
-  margin-top: 40px;
-}
-
-.all-products-container h2 {
+.featured-info h3 {
   font-size: 1.5rem;
-  margin-bottom: 20px;
-  color: #333;
+  margin-bottom: 15px;
 }
 
-.product-grid {
+.price-container {
+  margin-bottom: 20px;
+}
+
+.price {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #6d4c41;
+  margin-right: 15px;
+}
+
+.discount {
+  font-size: 1.2rem;
+  color: #8d6e63;
+  text-decoration: line-through;
+}
+
+.products-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
 }
 
 .product-card {
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
   background-color: #fff;
-  border-radius: 10px;
-  padding: 16px;
-  text-align: center;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease-in-out;
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(139, 69, 19, 0.15);
 }
 
-.product-card img {
-  width: 100%;
-  height: 180px;
-  object-fit: cover;
-  border-radius: 6px;
+.product-img {
+  height: 250px;
 }
 
-.product-info .price {
-  color: #d6336c;
+.product-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #5d4037;
+  margin-bottom: 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-brand {
+  font-size: 0.9rem;
+  color: #8d6e63;
+  margin-bottom: 10px;
+}
+
+.product-price {
+  font-size: 1.2rem;
   font-weight: bold;
-  font-size: 1.05rem;
 }
 
-.product-info .desc {
-  color: #555;
-  font-size: 0.95rem;
+.empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: #5d4037;
+  margin: 20px 0 10px;
+}
+
+.empty-state p {
+  color: #8d6e63;
+  margin-bottom: 20px;
 }
 
 @media (max-width: 768px) {
-  .filter-bar {
+  .hero-content h1 {
+    font-size: 2rem;
+  }
+  
+  .hero-content p {
+    font-size: 1rem;
+  }
+  
+  .slide-content {
     flex-direction: column;
-    gap: 10px;
+    padding: 10px;
   }
-
-  .carousel-item {
-    min-width: 160px;
-    max-width: 160px;
+  
+  .featured-img {
+    width: 150px;
+    height: 150px;
+    margin-right: 0;
+    margin-bottom: 15px;
   }
+  
+  .featured-info h3 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+  
+  .price-container {
+    text-align: center;
+  }
+  
+  .products-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+}
 
-  .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+@media (max-width: 480px) {
+  .filter-container {
+    flex-direction: column;
+  }
+  
+  .filter-group {
+    width: 100%;
+  }
+  
+  .products-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>

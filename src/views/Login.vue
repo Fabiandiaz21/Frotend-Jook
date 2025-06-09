@@ -12,7 +12,7 @@
     <div class="content">
       <!-- Área del logo -->
       <div class="logo-area">
-        <h1>Logo</h1>
+        <img src="https://res.cloudinary.com/dvqn0avdc/image/upload/v1749479130/WhatsApp_Image_2025-06-09_at_9.24.56_AM_btnr7n.jpg" alt="" style="width: 400px;">
       </div>
 
       <!-- Área del formulario -->

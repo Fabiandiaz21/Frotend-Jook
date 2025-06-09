@@ -29,13 +29,6 @@
                 <button @click="cartStore.removeItem(item.id)" class="remove-item-button">Eliminar</button>
               </div>
             </div>
-            <p>Subtotal: ${{ (item.precio * item.cantidad).toFixed(2) }}</p>
-            <button
-              @click="cartStore.removeItem(item.id)"
-              class="remove-item-button"
-            >
-              Eliminar
-            </button>
           </div>
         </div>
       </div>
