@@ -284,7 +284,6 @@ const logout = () => {
   });
 
   authStore.clearAuth();
-
   setTimeout(() => {
     router.push("/");
   }, 1000);
