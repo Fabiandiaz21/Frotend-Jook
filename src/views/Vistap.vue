@@ -118,7 +118,7 @@ import { getData, postData, deleteData } from '../services/jook';
 import { useAuthStore } from '../Store/useAunt';
 import { useCartStore } from '../Store/useCartStore';
 import { useQuasar } from 'quasar';
-import { formatNumberWithThousandsSeparator } from '../utils/utils';
+import { cargarFavoritos, formatNumberWithThousandsSeparator } from '../utils/utils';
 
 const route = useRoute();
 const productId = ref(route.params.id);
@@ -333,6 +333,7 @@ const toggleFavorito = async () => {
       type: 'positive',
       message: esFavorito.value ? 'Agregado a favoritos' : 'Quitado de favoritos',
     });
+    cargarFavoritos()
   } catch (err) {
     console.error('Error al modificar favorito:', err);
     $q.notify({
