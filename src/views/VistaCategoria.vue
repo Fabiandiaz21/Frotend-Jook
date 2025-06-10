@@ -2,12 +2,12 @@
   <q-page padding>
     <div class="q-pa-md">
       <h4 class="text-h4 q-my-md text-center">
-        Productos de la Marca - {{ marca.name || 'Sin nombre' }}
+        Productos de la Categoría - {{ categoria.name || 'Sin nombre' }}
       </h4>
 
       <div v-if="loading" class="text-center q-py-lg">
         <q-spinner-dots color="primary" size="3em" />
-        <div class="q-mt-md">Cargando productos de {{ marca.name || 'la marca' }}...</div>
+        <div class="q-mt-md">Cargando productos de {{ categoria.name || 'la categoría' }}...</div>
       </div>
 
       <div v-else-if="error" class="text-center q-py-lg text-negative">
@@ -51,7 +51,7 @@
       </div>
 
       <div v-else class="q-pa-md text-center text-h6 text-grey">
-        No se encontraron productos para esta marca.
+        No se encontraron productos para esta categoría.
       </div>
     </div>
   </q-page>
@@ -69,37 +69,39 @@ const $q = useQuasar();
 const cartStore = useCartStore();
 
 const products = ref([]);
-const marca = ref({}); // Cambiado de 'categoria' a 'marca'
-const loading = ref(true); // Nuevo estado de carga
-const error = ref(null);   // Nuevo estado de error
+const categoria = ref({}); // Cambiado de 'marca' a 'categoria'
+const loading = ref(true);
+const error = ref(null);
 
-// Función para calcular el promedio de las reseñas
 const averageRating = (reviews) => {
   if (!reviews || reviews.length === 0) return 0;
   const total = reviews.reduce((sum, review) => sum + review.rating, 0);
   return total / reviews.length;
 };
 
-// Función para obtener los productos de la marca por ID
-const fetchProductsByBrandPage = async (id) => {
+// --- INICIO: FUNCIONES MODIFICADAS ---
+
+// Función para obtener los productos por ID de categoría
+const fetchProductsByCategoryPage = async (id) => {
   loading.value = true;
-  error.value = null; // Reiniciar error
-  products.value = []; // Limpiar productos anteriores
+  error.value = null;
+  products.value = [];
 
   try {
-    const response = await getData(`/producto/marca/${id}`); // Ajusta la ruta a tu API de productos por marca
+    // AJUSTA LA RUTA DE LA API PARA OBTENER PRODUCTOS POR CATEGORÍA
+    const response = await getData(`/producto/categoria/${id}`);
     if (Array.isArray(response)) {
       products.value = response;
     } else {
       products.value = [];
       $q.notify({
         type: 'warning',
-        message: 'No se encontraron productos para esta marca o el formato de datos es incorrecto.',
+        message: 'No se encontraron productos para esta categoría o el formato de datos es incorrecto.',
       });
     }
-  } catch (err) { // Usar 'err' para diferenciar del 'error' ref
-    console.error('Error al obtener productos por marca:', err);
-    error.value = 'Ocurrió un error al cargar los productos de esta marca.';
+  } catch (err) {
+    console.error('Error al obtener productos por categoría:', err);
+    error.value = 'Ocurrió un error al cargar los productos de esta categoría.';
     $q.notify({
       type: 'negative',
       message: error.value,
@@ -109,25 +111,28 @@ const fetchProductsByBrandPage = async (id) => {
   }
 };
 
-// Función para obtener los detalles de la marca por ID
-const fetchMarca = async (id) => {
+// Función para obtener los detalles de la categoría por ID
+const fetchCategoria = async (id) => {
   try {
-    const response = await getData(`/marca/${id}`); // Ajusta la ruta a tu API de marca por ID
-    if (response && response.nombre) { // Asegúrate de que el campo sea 'nombre' si tu API lo devuelve así
-      marca.value = { name: response.nombre, _id: response._id }; // Almacena el nombre y el _id
+    // AJUSTA LA RUTA DE LA API PARA OBTENER DETALLES DE LA CATEGORÍA
+    const response = await getData(`/categoria/${id}`);
+    if (response && response.name) { // Asumiendo que tu API de categoría devuelve 'name'
+      categoria.value = { name: response.name, _id: response._id };
     } else {
-      marca.value = { name: 'Marca Desconocida', _id: id }; // Fallback
-      console.warn(`No se encontró el nombre para la marca con ID: ${id}`);
+      categoria.value = { name: 'Categoría Desconocida', _id: id };
+      console.warn(`No se encontró el nombre para la categoría con ID: ${id}`);
     }
-  } catch (err) { // Usar 'err' para diferenciar del 'error' ref
-    console.error('Error al obtener marca:', err);
+  } catch (err) {
+    console.error('Error al obtener categoría:', err);
     $q.notify({
       type: 'negative',
-      message: 'Error al cargar los detalles de la marca.',
+      message: 'Error al cargar los detalles de la categoría.',
     });
-    marca.value = { name: 'Error al Cargar Marca', _id: id }; // Otro fallback en caso de error
+    categoria.value = { name: 'Error al Cargar Categoría', _id: id };
   }
 };
+
+// --- FIN: FUNCIONES MODIFICADAS ---
 
 const agregarAlCarrito = (product) => {
   const cantidadSeleccionada = 1;
@@ -183,17 +188,17 @@ const agregarAlCarrito = (product) => {
 };
 
 onMounted(() => {
-  const id = route.params.id; // El ID de la marca viene de la ruta /vistamarca/:id
+  const id = route.params.id; // El ID de la categoría viene de la ruta /vistacategoria/:id
   if (id) {
-    fetchMarca(id); // Obtener los detalles (nombre) de la marca
-    fetchProductsByBrandPage(id); // Obtener los productos de esa marca
+    fetchCategoria(id); // Obtener los detalles (nombre) de la categoría
+    fetchProductsByCategoryPage(id); // Obtener los productos de esa categoría
   }
 });
 
 watch(() => route.params.id, (newId, oldId) => {
   if (newId && newId !== oldId) {
-    fetchMarca(newId); // Re-obtener los detalles de la marca si el ID cambia
-    fetchProductsByBrandPage(newId); // Re-obtener los productos si el ID cambia
+    fetchCategoria(newId); // Volver a obtener los detalles de la categoría si el ID cambia
+    fetchProductsByCategoryPage(newId); // Volver a obtener los productos si el ID cambia
   }
 });
 </script>
@@ -202,16 +207,15 @@ watch(() => route.params.id, (newId, oldId) => {
 .my-card {
   width: 100%;
   max-width: 300px;
-  /* Añadimos estilos para consistencia */
   display: flex;
   flex-direction: column;
 }
 
 .my-card .q-card-section {
-  flex-grow: 1; /* Permite que la sección se expanda */
+  flex-grow: 1;
 }
 
 .my-card .q-card-actions {
-  margin-top: auto; /* Mueve las acciones a la parte inferior */
+  margin-top: auto;
 }
 </style>
