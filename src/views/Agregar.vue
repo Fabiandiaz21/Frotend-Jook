@@ -849,27 +849,29 @@ const handleAddNewTipo = async () => {
 const handleSingleFileChange = (event, index) => {
   const file = event.target.files[0];
   if (file) {
-    // Reemplaza el archivo en la posición `index`
+    // Asegurar que el array tenga el tamaño correcto
+    while (images.value.length <= index) {
+      images.value.push(null);
+      imagePreviews.value.push(null);
+      imageNames.value.push(null);
+    }
+    
     images.value[index] = file;
     imagePreviews.value[index] = URL.createObjectURL(file);
     imageNames.value[index] = file.name;
+    
+    console.log('Archivo agregado en índice', index, ':', file.name); // Para debugging
   } else {
-    // Si no hay archivo, limpia la posición
-    images.value[index] = null;
-    imagePreviews.value[index] = null;
-    imageNames.value[index] = null;
+    if (images.value[index]) {
+      images.value[index] = null;
+      imagePreviews.value[index] = null;
+      imageNames.value[index] = null;
+    }
   }
-  // Limpia los espacios vacíos y reordena los arrays
-  images.value = images.value.filter(Boolean);
-  imagePreviews.value = imagePreviews.value.filter(Boolean);
-  imageNames.value = imageNames.value.filter(Boolean);
-};
-
-// Elimina una imagen de la lista de previsualización (agregar)
-const removeImage = (index) => {
-  images.value.splice(index, 1);
-  imagePreviews.value.splice(index, 1);
-  imageNames.value.splice(index, 1);
+  
+  // NO eliminar elementos aquí para mantener los índices
+  // Solo limpiar al final cuando se envíe el formulario
+  console.log('Estado actual de images:', images.value); // Para debugging
 };
 
 // --- Funciones para la gestión de imágenes (Edit Product) ---
@@ -1002,26 +1004,57 @@ const handleAddProduct = async () => {
     formData.append('price', productPrice.value);
     formData.append('stock', productStock.value);
     formData.append('categoryId', categoryId.value);
-    formData.append('marca', productMarca.value); // Envía el _id de la marca
-    formData.append('tipo', productTipo.value); // Envía el _id del tipo
+    formData.append('marca', productMarca.value);
+    formData.append('tipo', productTipo.value);
 
-    images.value.forEach((file, index) => {
-      if (file) {
-        formData.append('images', file);
-      }
+    // ✅ CAMBIO PRINCIPAL: Filtrar archivos nulos ANTES del forEach
+    const validImages = images.value.filter(file => file !== null && file !== undefined);
+    
+    console.log('Imágenes válidas a enviar:', validImages); // Para debugging
+    
+    validImages.forEach((file) => {
+      formData.append('images', file);
     });
 
     if (marcaImageFileAdd.value) {
       formData.append('marcaImagen', marcaImageFileAdd.value);
     }
 
-    const newProduct = await postData('/producto', formData, true); // `true` indica FormData
+    // Debug: Verificar contenido del FormData
+    console.log('FormData contents:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
+    const newProduct = await postData('/producto', formData, true);
 
     if (newProduct) {
       $q.notify({ type: 'positive', message: 'Producto agregado exitosamente.' });
       dialog.value = false;
-      resetAddForm();
-      await fetchProductos(); // Recargar la tabla de productos
+      
+      // Resetear formulario inline para evitar el error
+      productName.value = '';
+      productDescription.value = '';
+      productPrice.value = '';
+      productStock.value = '';
+      categoryId.value = '';
+      productMarca.value = null;
+      productTipo.value = null;
+      
+      // Limpiar URLs de objeto para liberar memoria
+      imagePreviews.value.forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      images.value = [];
+      imagePreviews.value = [];
+      imageNames.value = [];
+      marcaImageFileAdd.value = null;
+      marcaImagePreviewAdd.value = null;
+      
+      await fetchProductos();
     } else {
       $q.notify({ type: 'negative', message: 'Error al agregar el producto.' });
     }
@@ -1031,40 +1064,6 @@ const handleAddProduct = async () => {
   } finally {
     loading.value = false;
   }
-};
-
-// Restablece el formulario de agregar producto
-const resetAddForm = () => {
-  productName.value = '';
-  productDescription.value = '';
-  productPrice.value = '';
-  productStock.value = '';
-  categoryId.value = '';
-  productMarca.value = null;
-  productTipo.value = null;
-  images.value = [];
-  imagePreviews.value = [];
-  imageNames.value = [];
-  marcaImageFileAdd.value = null;
-  marcaImagePreviewAdd.value = null;
-};
-
-// Abre el diálogo de edición y carga los datos del producto
-const openEditDialog = (product) => {
-  productToEdit.value = JSON.parse(JSON.stringify(product));
-  productToEdit.value.marca = product.marca?._id || null;
-  productToEdit.value.tipo = product.tipo?._id || null;
-  productToEdit.value.categoryId = product.categoryId?._id || null;
-
-  // Inicializar las previsualizaciones de imágenes existentes
-  editImagePreviews.value = product.images ? [...product.images] : [];
-  editImages.value = []; // Limpiar archivos nuevos para edición
-
-  // Inicializar la previsualización de la imagen de marca
-  marcaImageFileEdit.value = null;
-  marcaImagePreviewEdit.value = product.marca?.imagen || null;
-
-  editDialog.value = true;
 };
 
 // Maneja la actualización de un producto
