@@ -49,7 +49,7 @@
                   <div class="col-6">
                     <q-item-label class="text-caption text-brown-7">
                       <q-icon name="local_offer" size="sm" />
-                      Marca: {{ producto.marca }}
+                      Marca: {{ getNombreMarca(producto.marca) }}
                     </q-item-label>
                   </div>
                   <div class="col-6">
@@ -116,11 +116,13 @@ import { cargarFavoritos } from "../utils/utils";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../Store/useAunt";
 import { useQuasar } from "quasar";
+import axios from "axios";
 
 const $q = useQuasar();
 const authStore = useAuthStore();
 const router = useRouter();
 const favoritos = authStore.favorites;
+const marcas = ref([]);
 
 const verDetalle = (id) => {
   router.push(`/vistap/${id}`);
@@ -145,8 +147,28 @@ const removeFromFavorites = (productId) => {
   });
 };
 
+const cargarMarcas = async () => {
+  try {
+    const res = await axios.get("http://localhost:3000/api/marca"); // Ajusta la URL a tu backend
+    marcas.value = res.data;
+  } catch (error) {
+    $q.notify({
+      message: "No se pudieron cargar las marcas",
+      color: "red-6",
+      icon: "error",
+      position: "top",
+    });
+  }
+};
+
+const getNombreMarca = (id) => {
+  const marca = marcas.value.find((m) => m._id === id);
+  return marca ? marca.nombre : "Sin marca";
+};
+
 onMounted(() => {
   cargarFavoritos();
+  cargarMarcas();
 });
 </script>
 
