@@ -12,6 +12,9 @@
           <div class="col-12 col-md-auto">
             <q-btn color="accent" icon="category" label="Nuevo Tipo" @click="openAddTipoDialog" />
           </div>
+          <div class="col-12 col-md-auto">
+            <q-btn color="purple" icon="local_offer" label="Ver Ofertas" @click="toggleOfertasFilter" />
+          </div>
 
           <div class="col-12 col-md-4 q-ml-auto">
             <q-input outlined dense v-model="searchQuery" label="Buscar producto" clearable>
@@ -83,6 +86,13 @@
             <q-btn :icon="props.row.estado === 'activo' ? 'cancel' : 'check'"
               :color="props.row.estado === 'activo' ? 'negative' : 'positive'" dense size="sm" flat
               @click="cambiarEstado(props.row)" class="q-px-xs" />
+
+            <q-btn v-if="!props.row.hasActiveOffer" icon="local_offer" color="teal" dense size="sm" flat label="Oferta"
+              @click="openOfertaDialog(props.row)" class="q-px-xs" />
+            <q-btn v-else icon="edit_off" color="orange" dense size="sm" flat label="Editar Oferta"
+              @click="openOfertaDialog(props.row)" class="q-px-xs" />
+            <q-btn v-if="props.row.hasActiveOffer" icon="delete_forever" color="red" dense size="sm" flat
+              label="Quitar Oferta" @click="confirmDesactivarOferta(props.row)" class="q-px-xs" />
           </div>
         </q-td>
       </template>
@@ -100,7 +110,6 @@
             <q-avatar v-if="props.row.marca?.imagen" rounded size="32px">
               <img :src="props.row.marca.imagen" />
             </q-avatar>
-            <span>{{ props.row.marca?.nombre || 'N/A' }}</span>
           </div>
         </q-td>
       </template>
@@ -109,19 +118,40 @@
           <span>{{ props.row.tipo?.nombre || 'N/A' }}</span>
         </q-td>
       </template>
+
+      <template v-slot:body-cell-oferta="props">
+        <q-td align="center">
+          <q-chip v-if="props.row.hasActiveOffer" color="teal" text-color="white" icon="local_offer"
+            :label="`${props.row.offer?.percentage}% Desc.`" />
+          <q-chip v-else color="grey" text-color="white" label="Sin Oferta" />
+        </q-td>
+      </template>
+
+      <template v-slot:body-cell-precioFinal="props">
+        <q-td align="right">
+          <span :class="{ 'text-strike text-grey': props.row.hasActiveOffer }">{{ formatCurrency(props.row.price)
+          }}</span>
+          <br v-if="props.row.hasActiveOffer" />
+          <span v-if="props.row.hasActiveOffer" class="text-bold text-green-8">
+            {{ formatCurrency(calculateFinalPrice(props.row)) }}
+          </span>
+        </q-td>
+      </template>
+
     </q-table>
 
     <q-dialog v-model="editDialog" :persistent="false">
       <q-card style="min-width: 500px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6">Editar Producto</div>
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
           <q-form @submit.prevent="handleEditProduct">
             <q-input v-model="productToEdit.nombre" label="Nombre del Producto" outlined dense required />
 
-            <q-select outlined dense v-model="productToEdit.marca" :options="availableMarcas" label="Marca" clearable
+            <q-select outlined dense v-model="productToEdit.marca" :options="allMarcas" label="Marca" clearable
               use-input input-debounce="0" @filter="filterMarcasEdit" @new-value="addMarcaFromSelect"
               new-value-mode="add-unique" emit-value map-options>
               <template v-slot:no-option>
@@ -158,9 +188,9 @@
               </div>
             </div>
 
-            <q-select outlined dense v-model="productToEdit.tipo" :options="availableTipos" label="Tipo" clearable
-              use-input input-debounce="0" @filter="filterTiposEdit" @new-value="addTipoFromSelect"
-              new-value-mode="add-unique" emit-value map-options>
+            <q-select outlined dense v-model="productToEdit.tipo" :options="allTipos" label="Tipo" clearable use-input
+              input-debounce="0" @filter="filterTiposEdit" @new-value="addTipoFromSelect" new-value-mode="add-unique"
+              emit-value map-options>
               <template v-slot:no-option>
                 <q-item>
                   <q-item-section class="text-grey">
@@ -216,13 +246,14 @@
       <q-card style="min-width: 500px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6">Agregar Producto</div>
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
           <q-form @submit.prevent="handleAddProduct">
             <q-input v-model="productName" label="Nombre del Producto" outlined dense required />
 
-            <q-select outlined dense v-model="productMarca" :options="availableMarcas" label="Marca" clearable use-input
+            <q-select outlined dense v-model="productMarca" :options="allMarcas" label="Marca" clearable use-input
               input-debounce="0" @filter="filterMarcasAdd" @new-value="addMarcaFromSelect" new-value-mode="add-unique"
               emit-value map-options>
               <template v-slot:no-option>
@@ -259,7 +290,7 @@
               </div>
             </div>
 
-            <q-select outlined dense v-model="productTipo" :options="availableTipos" label="Tipo" clearable use-input
+            <q-select outlined dense v-model="productTipo" :options="allTipos" label="Tipo" clearable use-input
               input-debounce="0" @filter="filterTiposAdd" @new-value="addTipoFromSelect" new-value-mode="add-unique"
               emit-value map-options>
               <template v-slot:no-option>
@@ -359,13 +390,42 @@
       </q-card>
     </q-dialog>
 
+    <q-dialog v-model="ofertaDialog" :persistent="false">
+      <q-card style="min-width: 400px; max-width: 90vw;">
+        <q-card-section class="row items-center justify-between">
+          <div class="text-h6">{{ offerToEdit?.offer ? 'Editar Oferta' : 'Activar Oferta' }}</div>
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <div v-if="offerToEdit">
+            <div class="text-subtitle1 q-mb-sm">Producto: <strong>{{ offerToEdit.nombre }}</strong></div>
+            <div class="text-body2">Precio Original: {{ formatCurrency(offerToEdit.price) }}</div>
+            <q-input outlined dense v-model="offerPercentage" label="Porcentaje de Descuento (%)" type="number" min="1"
+              max="100" required class="q-mt-md" />
+            <q-input outlined dense v-model="offerExpirationDate" label="Fecha de Vencimiento" type="date" required
+              class="q-mt-sm" />
+            <div class="text-body1 q-mt-md" v-if="offerPercentage && offerToEdit.price">
+              Precio Final Estimado: <span class="text-bold text-green-8">{{
+                formatCurrency(offerToEdit.price * (1 - (offerPercentage / 100))) }}</span>
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancelar" color="negative" v-close-popup />
+          <q-btn label="Guardar Oferta" color="primary" @click="handleActivarOferta" :loading="loading" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
-import { postData, getData, putData } from '../Services/jook.js';
+import { postData, getData, putData, deleteData } from '../Services/jook.js';
 
 const $q = useQuasar();
 
@@ -424,22 +484,30 @@ const filterMarca = ref(null);
 // filterTipo ahora es un _id o null
 const filterTipo = ref(null);
 const filterCategory = ref(null);
-
-
+const showOfertasOnly = ref(false); // Nueva variable para filtrar por productos con oferta
 
 const allMarcas = ref([])
 const allTipos = ref([])
 
 
 const productos = ref([]); // Array que contiene todos los productos cargados
+
+// --- Variables para la gestión de ofertas ---
+const ofertaDialog = ref(false); // Controla la visibilidad del modal de oferta
+const offerToEdit = ref(null); // Objeto del producto para el que se está gestionando la oferta
+const offerPercentage = ref(null); // Porcentaje de descuento para la oferta
+const offerExpirationDate = ref(null); // Fecha de vencimiento de la oferta
+
 const columnas = [ // Definición de las columnas de la tabla Quasar
   { name: 'imagen', label: 'Imagen', field: 'images', align: 'center' },
-  { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true, format: val => val?.nombre || 'N/A' },
-  { name: 'categoriaNombre', label: 'Categoría', field: 'categoriaNombre', align: 'center', sortable: true },
+  { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
+  { name: 'categoryId', label: 'Categoría', field: 'categoryId', align: 'center', sortable: true , format: val => val?.name},
   { name: 'tipo', label: 'Tipo', field: 'tipo', align: 'left', sortable: true, format: val => val?.nombre || 'N/A' }, // Asegura que muestre el nombre del tipo
   { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left', sortable: true },
   { name: 'descripcion', label: 'Descripción', field: 'descripcion', align: 'center' },
-  { name: 'precio', label: 'Precio', field: 'price', align: 'right', sortable: true },
+  { name: 'precio', label: 'Precio Original', field: 'price', align: 'right', sortable: true },
+  { name: 'oferta', label: 'Oferta', align: 'center' }, // Nueva columna para mostrar el estado de la oferta
+  { name: 'precioFinal', label: 'Precio Final', align: 'right', sortable: true }, // Nueva columna para el precio final
   { name: 'stock', label: 'Stock', field: 'stock', align: 'right', sortable: true },
   { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
 ];
@@ -467,7 +535,7 @@ const filteredProductos = computed(() => {
       (producto.nombre && producto.nombre.toLowerCase().includes(searchLower)) ||
       (producto.descripcion && producto.descripcion.toLowerCase().includes(searchLower)) ||
       (producto.marca?.nombre && producto.marca.nombre.toLowerCase().includes(searchLower)) ||
-      (producto.tipo?.name && producto.tipo.name.toLowerCase().includes(searchLower)) || // Cambio: producto.tipo.name
+      (producto.tipo?.nombre && producto.tipo.nombre.toLowerCase().includes(searchLower)) || // Cambio: producto.tipo.nombre
       (producto.categoriaNombre && producto.categoriaNombre.toLowerCase().includes(searchLower))
     );
   }
@@ -485,6 +553,11 @@ const filteredProductos = computed(() => {
   // Filtrado por Categoría
   if (filterCategory.value) {
     result = result.filter(producto => producto.categoryId?._id === filterCategory.value);
+  }
+
+  // Nuevo filtro para mostrar solo productos con oferta
+  if (showOfertasOnly.value) {
+    result = result.filter(producto => producto.hasActiveOffer);
   }
 
   return result;
@@ -592,15 +665,19 @@ const addMarcaFromSelect = async (val, done) => {
     try {
       // 2. Llama a tu API para crear la nueva marca
       const formData = new FormData();
-      formData.append('name', val);
-      if (newMarcaImageFile.value) { // Utiliza newMarcaImageFile para la imagen del select
-        formData.append('image', newMarcaImageFile.value);
+      formData.append('nombre', val); // Asegúrate de que el nombre del campo sea 'nombre'
+      if (marcaImageFileAdd.value) { // Utiliza marcaImageFileAdd para la imagen del select en el modal agregar
+        formData.append('imagenMarca', marcaImageFileAdd.value); // Asegúrate de que el nombre del campo sea 'imagenMarca'
       }
-      const newMarcaData = await postData('/marca', formData, true);
+      const newMarcaData = await postData('/marca', formData, true); // `true` indica FormData
 
-      if (newMarcaData && newMarcaData._id) {
+      if (newMarcaData && newMarcaData.marca && newMarcaData.marca._id) { // Accede a newMarcaData.marca
         // 3. Si se creó correctamente, añade la nueva opción a availableMarcas
-        const newOption = { label: newMarcaData.name, value: newMarcaData._id, imagen: newMarcaData.image || null };
+        const newOption = {
+          label: newMarcaData.marca.nombre,
+          value: newMarcaData.marca._id,
+          imagen: newMarcaData.marca.imagen || null
+        };
         availableMarcas.value.push(newOption);
         availableMarcas.value.sort((a, b) => a.label.localeCompare(b.label));
         $q.notify({ type: 'positive', message: `Marca "${val}" creada y seleccionada.` });
@@ -615,11 +692,11 @@ const addMarcaFromSelect = async (val, done) => {
       if (done) done(null);
     } finally {
       loading.value = false;
-      newMarcaImageFile.value = null; // Limpiar después de usar
-      marcaImagePreviewAdd.value = null; // Limpiar previsualización del select
+      // No limpiar marcaImageFileAdd aquí si aún se va a usar en el formulario principal
     }
   }
 };
+
 
 // Agrega un nuevo tipo si el usuario lo escribe en el q-select (y no existe)
 const addTipoFromSelect = async (val, done) => {
@@ -634,7 +711,8 @@ const addTipoFromSelect = async (val, done) => {
     loading.value = true;
     try {
       // Llama a tu API para crear el nuevo tipo
-      const newTypeData = await postData('/tipo', { nombre: val });
+      const response = await postData('/tipo', { nombre: val });
+      const newTypeData = response.tipo; // Asegúrate de acceder al objeto correcto
 
       if (newTypeData && newTypeData._id) {
         const newOption = { label: newTypeData.nombre, value: newTypeData._id };
@@ -662,13 +740,13 @@ const addTipoFromSelect = async (val, done) => {
 const filterFnMarca = (val, update) => {
   update(() => {
     if (val === '') {
-      // filterMarca.options debe ser una variable local en la función update
-      // y no una propiedad de ref de filterMarca.
-      // Quasar espera que `update` se llame con una función que actualiza las opciones.
-      filterMarcasAdd.options = uniqueMarcasOptions.value; // Usamos el nombre de la función para el ámbito
     } else {
       const needle = val.toLowerCase();
-      filterMarcasAdd.options = uniqueMarcasOptions.value.filter(v => v.label.toLowerCase().includes(needle));
+      // Asegúrate de que estás filtrando el array correcto de opciones
+      const filtered = uniqueMarcasOptions.value.filter(v => v.label.toLowerCase().includes(needle));
+
+      // Si `availableMarcas` es el origen de las opciones, deberías filtrar eso.
+      availableMarcas.value = filtered; // Esto afectaría el select principal también
     }
   });
 };
@@ -677,13 +755,15 @@ const filterFnMarca = (val, update) => {
 const filterFnTipo = (val, update) => {
   update(() => {
     if (val === '') {
-      filterTiposAdd.options = availableTipos.value;
+      // Se actualiza directamente `availableTipos`
     } else {
       const needle = val.toLowerCase();
-      filterTiposAdd.options = availableTipos.value.filter(v => v.label.toLowerCase().includes(needle));
+      const filtered = availableTipos.value.filter(v => v.label.toLowerCase().includes(needle));
+      availableTipos.value = filtered;
     }
   });
 };
+
 
 // --- Funciones para los botones de agregar marca/tipo (modales separados) ---
 
@@ -708,12 +788,12 @@ const handleAddNewMarca = async () => {
     if (newMarcaImageFile.value) {
       formData.append('imagenMarca', newMarcaImageFile.value);
     }
-    const newMarca = await postData('/marca', formData, true); 
+    const newMarca = await postData('/marca', formData, true);
 
     if (newMarca && newMarca.marca && newMarca.marca._id) {
       $q.notify({ type: 'positive', message: `Marca "${newMarca.marca.nombre}" agregada.` });
 
-      await fetchMarcas();
+      await fetchMarcas(); // Volver a cargar las marcas para actualizar las opciones
 
       addMarcaDialog.value = false;
       newMarcaName.value = '';
@@ -748,11 +828,11 @@ const handleAddNewTipo = async () => {
 
     if (newTipo && newTipo._id) {
       $q.notify({ type: 'positive', message: `Tipo "${newTipo.nombre}" agregado.` });
-      await fetchTipos();
+      await fetchTipos(); // Volver a cargar los tipos para actualizar las opciones
       addTipoDialog.value = false;
       newTipoName.value = '';
     } else {
-      $q.notify({ type: 'negative', message: 'Error al agregar el tipo (respuesta inválida).' });
+      $q.notify({ type: 'negative', message: 'Error al agregar el tipo.' });
     }
   } catch (error) {
     console.error("Error al añadir nuevo tipo:", error);
@@ -763,149 +843,156 @@ const handleAddNewTipo = async () => {
 };
 
 
+// --- Funciones para la gestión de imágenes (Add Product) ---
 
-// --- Ciclo de vida (al montar el componente) ---
-onMounted(async () => {
-  await fetchCategories();
-  await fetchMarcas(); // Cargar marcas al inicio
-  await fetchTipos();   // Cargar tipos al inicio
-  await fetchProductos();
-});
-// --- Funciones de comunicación con el backend ---
+// Maneja la selección de un solo archivo de imagen para el producto (agregar)
+const handleSingleFileChange = (event, index) => {
+  const file = event.target.files[0];
+  if (file) {
+    // Asegurar que el array tenga el tamaño correcto
+    while (images.value.length <= index) {
+      images.value.push(null);
+      imagePreviews.value.push(null);
+      imageNames.value.push(null);
+    }
+    
+    images.value[index] = file;
+    imagePreviews.value[index] = URL.createObjectURL(file);
+    imageNames.value[index] = file.name;
+    
+    console.log('Archivo agregado en índice', index, ':', file.name); // Para debugging
+  } else {
+    if (images.value[index]) {
+      images.value[index] = null;
+      imagePreviews.value[index] = null;
+      imageNames.value[index] = null;
+    }
+  }
+  
+  // NO eliminar elementos aquí para mantener los índices
+  // Solo limpiar al final cuando se envíe el formulario
+  console.log('Estado actual de images:', images.value); // Para debugging
+};
 
-// Obtiene todas las categorías desde el backend
-const fetchCategories = async () => {
-  try {
-    const response = await getData('/categoria');
-    categories.value = response.map(cat => ({
-      label: cat.name,
-      value: cat._id,
-    }));
-  } catch (error) {
-    $q.notify({ type: 'negative', message: 'Error al cargar categorías' });
+// --- Funciones para la gestión de imágenes (Edit Product) ---
+
+// Maneja la selección de un solo archivo de imagen para el producto (editar)
+const handleSingleEditFileChange = (event, index) => {
+  const file = event.target.files[0];
+  if (file) {
+    editImages.value[index] = file;
+    editImagePreviews.value[index] = URL.createObjectURL(file);
+  } else {
+    editImages.value[index] = null;
+    // Si no hay nuevo archivo, se intenta mostrar la imagen original si existe
+    if (productToEdit.value?.images?.[index]) {
+      editImagePreviews.value[index] = productToEdit.value.images[index];
+    } else {
+      editImagePreviews.value[index] = null;
+    }
+  }
+  editImages.value = editImages.value.filter(Boolean);
+  editImagePreviews.value = editImagePreviews.value.filter(Boolean);
+};
+
+// Elimina una imagen de la lista de previsualización (editar)
+const removeEditImage = (index) => {
+  if (productToEdit.value.images && productToEdit.value.images[index]) {
+    if (!productToEdit.value.imagesToRemove) {
+      productToEdit.value.imagesToRemove = [];
+    }
+    productToEdit.value.imagesToRemove.push(productToEdit.value.images[index]);
+  }
+  editImages.value.splice(index, 1);
+  editImagePreviews.value.splice(index, 1);
+  if (productToEdit.value.images) {
+    productToEdit.value.images.splice(index, 1);
   }
 };
 
 
-// Obtiene todas las marcas desde el backend
-// ... (código existente)
+// --- Funciones CRUD de Productos ---
 
-// Obtiene todas las marcas desde el backend
-const fetchMarcas = async () => {
-  try {
-    const response = await getData('/marca');
-    console.log("marca", response);
-
-    availableMarcas.value = response.map(m => ({
-      label: m.nombre || 'Sin Nombre',
-      value: m._id
-    })).sort((a, b) => {
-
-      const labelA = a.label || '';
-      const labelB = b.label || '';
-      return labelA.localeCompare(labelB);
-    });
-  } catch (error) {
-    $q.notify({ type: 'negative', message: 'Error al cargar marcas.' });
-    console.error('Error fetching marcas:', error);
-  }
-};
-
-
-// Obtiene todos los tipos desde el backend
-const fetchTipos = async () => {
-  try {
-    const response = await getData('/tipo');
-    console.log("respuesta", response);
-
-    availableTipos.value = response.map(t => ({
-      label: t.nombre || 'Sin Tipo', // <--- CAMBIO CLAVE: Usa 'Sin Tipo' o una cadena vacía si t.name es undefined/null
-      value: t._id
-    })).sort((a, b) => {
-      const labelA = a.label || ''; // Si por alguna razón label aún es undefined, usa ''
-      const labelB = b.label || '';
-      return labelA.localeCompare(labelB);
-    });
-  } catch (error) {
-    $q.notify({ type: 'negative', message: 'Error al cargar tipos.' });
-    console.error('Error fetching types:', error);
-  }
-};
-
-// ... (resto de tu código)
-
-// Obtiene todos los productos desde el backend
+// Carga todos los productos
 const fetchProductos = async () => {
   loadingTable.value = true;
   try {
-    const response = await getData('/producto');
-    console.log("respuesta productos", response);
-
-    // En tu función fetchProductos:
-    productos.value = response.map(producto => {
-      const marcaObj = producto.marca && typeof producto.marca === 'object'
-        ? { _id: producto.marca._id, nombre: producto.marca.nombre, imagen: producto.marca.image } // <--- CAMBIO AQUÍ: producto.marca.name
-        : { _id: producto.marca || null, nombre: 'N/A', imagen: null };
-
-      const tipoObj = producto.tipo && typeof producto.tipo === 'object'
-        ? { _id: producto.tipo._id, nombre: producto.tipo.nombre }
-        : { _id: producto.tipo || null, nombre: 'N/A' };
+    const data = await getData('/producto');
+    productos.value = data.map(p => {
+      const category = categories.value.find(c => c.value === p.tipo?._id); // Usamos p.tipo?._id para seguridad
 
       return {
-        ...producto,
-        categoriaNombre: producto.categoryId?.name || 'Sin categoría',
-        marca: marcaObj,
-        tipo: tipoObj,
+        ...p,
+        categoriaNombre: category ? category.label : 'Desconocida',
+        hasActiveOffer: p.offer && new Date(p.offer.expirationDate) > new Date(),
       };
     });
+    console.log("Productos con nombres de categoría asignados:", productos.value); // Para verificar
   } catch (error) {
-    $q.notify({ type: 'negative', message: 'Error al cargar productos' });
+    console.error('Error al obtener productos:', error);
+    $q.notify({ type: 'negative', message: 'Error al cargar los productos.' });
   } finally {
     loadingTable.value = false;
   }
 };
-
-// Abre el diálogo de edición y carga los datos del producto seleccionado
-const openEditDialog = (producto) => {
-  let categoriaId;
-
-  if (producto.categoryId) {
-    categoriaId = typeof producto.categoryId === 'object' ?
-      producto.categoryId._id : // Si es un objeto de categoría, toma el _id
-      producto.categoryId; // Si ya es solo el _id
-  } else {
-    categoriaId = ''; // Si no tiene categoría
+// Carga todas las marcas
+const fetchMarcas = async () => {
+  try {
+    const data = await getData('/marca');
+    availableMarcas.value = data.map(m => ({
+      label: m.nombre,
+      value: m._id,
+      imagen: m.imagen // Asegúrate de que tu API devuelva la URL de la imagen de la marca
+    }));
+    // También actualiza la lista de opciones para el filtro principal
+    allMarcas.value = availableMarcas.value;
+  } catch (error) {
+    console.error('Error al obtener marcas:', error);
+    $q.notify({ type: 'negative', message: 'Error al cargar las marcas.' });
   }
-
-  // Inicializamos `productToEdit` con una copia de los datos del producto
-  productToEdit.value = {
-    _id: producto._id,
-    nombre: producto.nombre,
-    descripcion: producto.descripcion,
-    price: producto.price,
-    stock: producto.stock,
-    categoryId: categoriaId,
-    // Aseguramos que 'marca' y 'tipo' se inicialicen con su _id si existen,
-    // o null si no hay referencia. Esto es lo que `v-model` del q-select espera.
-    marca: producto.marca?._id || null,
-    tipo: producto.tipo?._id || null,
-    images: [...(producto.images || [])] // Copia de las URLs de imágenes existentes
-  };
-
-  // Inicializamos las previsualizaciones de imágenes con las imágenes existentes del producto
-  editImagePreviews.value = [...(productToEdit.value.images || [])];
-  editImages.value = []; // Reiniciamos los archivos de imagen nuevos para edición
-
-  // Inicializamos la imagen de la marca para edición
-  marcaImageFileEdit.value = null; // Nos aseguramos de que no haya un archivo `File` en el ref
-  marcaImagePreviewEdit.value = producto.marca?.imagen || null; // Carga la imagen actual de la marca
-  editDialog.value = true;
 };
 
-// Maneja el envío del formulario para agregar un nuevo producto
+// Carga todos los tipos de uso
+const fetchTipos = async () => {
+  try {
+    const data = await getData('/tipo');
+    availableTipos.value = data.map(t => ({
+      label: t.nombre,
+      value: t._id
+    }));
+    allTipos.value = availableTipos.value;
+  } catch (error) {
+    console.error('Error al obtener tipos de uso:', error);
+    $q.notify({ type: 'negative', message: 'Error al cargar los tipos de uso.' });
+  }
+};
+
+// Carga las categorías
+const fetchCategories = async () => {
+  try {
+    // Asume que tienes una API para categorías
+    const data = await getData('/categoria');
+    console.log("Datos de categorías crudos (API):", data); // Para depuración
+    categories.value = data.map(cat => ({
+      label: cat.name,
+      value: cat._id
+    }));
+     console.log("Categorías mapeadas para uso interno:", categories.value); // ¡Verifica esto en la consola!
+  } catch (error) {
+    console.error('Error al obtener categorías:', error);
+    $q.notify({ type: 'negative', message: 'Error al cargar las categorías.' });
+  }
+};
+
+// Maneja el envío del formulario de agregar producto
 const handleAddProduct = async () => {
   if (!productName.value || !productDescription.value || !productPrice.value || !productStock.value || !categoryId.value || !productMarca.value || !productTipo.value) {
-    $q.notify({ type: 'negative', message: 'Por favor, rellena todos los campos obligatorios.' });
+    $q.notify({ type: 'negative', message: 'Por favor, complete todos los campos requeridos.' });
+    return;
+  }
+
+  if (images.value.length === 0) {
+    $q.notify({ type: 'negative', message: 'Por favor, suba al menos una imagen del producto.' });
     return;
   }
 
@@ -917,34 +1004,74 @@ const handleAddProduct = async () => {
     formData.append('price', productPrice.value);
     formData.append('stock', productStock.value);
     formData.append('categoryId', categoryId.value);
-    formData.append('marca', productMarca.value); // Aquí enviamos el _id de la marca
-    formData.append('tipo', productTipo.value);     // Aquí enviamos el _id del tipo
+    formData.append('marca', productMarca.value);
+    formData.append('tipo', productTipo.value);
 
-    images.value.forEach((file) => {
+    // ✅ CAMBIO PRINCIPAL: Filtrar archivos nulos ANTES del forEach
+    const validImages = images.value.filter(file => file !== null && file !== undefined);
+    
+    console.log('Imágenes válidas a enviar:', validImages); // Para debugging
+    
+    validImages.forEach((file) => {
       formData.append('images', file);
     });
 
     if (marcaImageFileAdd.value) {
-      formData.append('marcaImage', marcaImageFileAdd.value);
+      formData.append('marcaImagen', marcaImageFileAdd.value);
     }
 
-    await postData('/producto', formData, true); // true para indicar que se envía FormData
-    $q.notify({ type: 'positive', message: 'Producto agregado exitosamente.' });
-    resetAddForm(); // Limpiar el formulario
-    dialog.value = false; // Cerrar el modal
-    await fetchProductos(); // Recargar la lista de productos
+    // Debug: Verificar contenido del FormData
+    console.log('FormData contents:');
+    for (let pair of formData.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
+    const newProduct = await postData('/producto', formData, true);
+
+    if (newProduct) {
+      $q.notify({ type: 'positive', message: 'Producto agregado exitosamente.' });
+      dialog.value = false;
+      
+      // Resetear formulario inline para evitar el error
+      productName.value = '';
+      productDescription.value = '';
+      productPrice.value = '';
+      productStock.value = '';
+      categoryId.value = '';
+      productMarca.value = null;
+      productTipo.value = null;
+      
+      // Limpiar URLs de objeto para liberar memoria
+      imagePreviews.value.forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      
+      images.value = [];
+      imagePreviews.value = [];
+      imageNames.value = [];
+      marcaImageFileAdd.value = null;
+      marcaImagePreviewAdd.value = null;
+      
+      await fetchProductos();
+    } else {
+      $q.notify({ type: 'negative', message: 'Error al agregar el producto.' });
+    }
   } catch (error) {
     console.error('Error al agregar producto:', error);
-    $q.notify({ type: 'negative', message: 'Error al agregar producto.' });
+    $q.notify({ type: 'negative', message: 'Error al procesar el producto.' });
   } finally {
     loading.value = false;
   }
 };
 
-// Maneja el envío del formulario para editar un producto existente
+// Maneja la actualización de un producto
 const handleEditProduct = async () => {
-  if (!productToEdit.value.nombre || !productToEdit.value.descripcion || !productToEdit.value.price || !productToEdit.value.stock || !productToEdit.value.categoryId || !productToEdit.value.marca || !productToEdit.value.tipo) {
-    $q.notify({ type: 'negative', message: 'Por favor, rellena todos los campos obligatorios.' });
+  if (!productToEdit.value.nombre || !productToEdit.value.descripcion || !productToEdit.value.price ||
+    !productToEdit.value.stock || !productToEdit.value.categoryId || !productToEdit.value.marca ||
+    !productToEdit.value.tipo) {
+    $q.notify({ type: 'negative', message: 'Por favor, complete todos los campos requeridos.' });
     return;
   }
 
@@ -956,106 +1083,208 @@ const handleEditProduct = async () => {
     formData.append('price', productToEdit.value.price);
     formData.append('stock', productToEdit.value.stock);
     formData.append('categoryId', productToEdit.value.categoryId);
-    formData.append('marca', productToEdit.value.marca); // Aquí enviamos el _id de la marca
-    formData.append('tipo', productToEdit.value.tipo);     // Aquí enviamos el _id del tipo
+    formData.append('marca', productToEdit.value.marca); // Envía el _id
+    formData.append('tipo', productToEdit.value.tipo); // Envía el _id
 
-    // Añade las imágenes nuevas con el nombre esperado 'images'
-    editImages.value.forEach((file) => {
-      formData.append('images', file);
+    // Añadir nuevas imágenes
+    editImages.value.forEach((file, index) => {
+      if (file) {
+        formData.append('images', file);
+      }
     });
 
-    // Envía las URLs de las imágenes que se mantienen
-    formData.append('existingImages', JSON.stringify(editImagePreviews.value.filter(img => typeof img === 'string')));
-
-    // Añade la imagen de marca con el nombre esperado 'marcaImagen'
-    if (marcaImageFileEdit.value) {
-      formData.append('marcaImagen', marcaImageFileEdit.value);
+    if (productToEdit.value.images) {
+      productToEdit.value.images.forEach(imageUrl => {
+        if (!productToEdit.value.imagesToRemove || !productToEdit.value.imagesToRemove.includes(imageUrl)) {
+          formData.append('existingImages', imageUrl);
+        }
+      });
     }
 
-    await putData(`/producto/id/${productToEdit.value._id}`, formData, true); // true para indicar que se envía FormData
-    $q.notify({ type: 'positive', message: 'Producto actualizado exitosamente.' });
-    editDialog.value = false; // Cerrar el modal
-    await fetchProductos(); // Recargar la lista de productos
+    // Añadir imágenes a eliminar
+    if (productToEdit.value.imagesToRemove && productToEdit.value.imagesToRemove.length > 0) {
+      productToEdit.value.imagesToRemove.forEach(url => {
+        formData.append('imagesToRemove', url);
+      });
+    }
+
+    // Manejar la imagen de la marca
+    if (marcaImageFileEdit.value) {
+      formData.append('marcaImagen', marcaImageFileEdit.value);
+    } else if (productToEdit.value.marca?.imagen && !marcaImageFileEdit.value && !productToEdit.value.keepMarcaImage) {
+      formData.append('currentMarcaImage', productToEdit.value.marca.imagen); // Enviar la URL actual si no se cambió.
+    }
+
+
+    const updatedProduct = await putData(`/productos/id/${productToEdit.value._id}`, formData, true); // `true` indica FormData
+
+    if (updatedProduct) {
+      $q.notify({ type: 'positive', message: 'Producto actualizado exitosamente.' });
+      editDialog.value = false;
+      await fetchProductos(); // Recargar la tabla
+    } else {
+      $q.notify({ type: 'negative', message: 'Error al actualizar el producto.' });
+    }
   } catch (error) {
     console.error('Error al actualizar producto:', error);
-    $q.notify({ type: 'negative', message: 'Error al actualizar producto.' });
+    $q.notify({ type: 'negative', message: 'Error al procesar la actualización del producto.' });
   } finally {
     loading.value = false;
   }
 };
 
 // Cambiar el estado de un producto (activo/inactivo)
-const cambiarEstado = async (producto) => {
-  loadingTable.value = true;
+const cambiarEstado = async (product) => {
+  const newEstado = product.estado === 'activo' ? 'inactivo' : 'activo';
+  $q.dialog({
+    title: 'Confirmar cambio de estado',
+    message: `¿Estás seguro de que quieres cambiar el estado de "${product.nombre}" a "${newEstado}"?`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    loadingTable.value = true;
+    try {
+      // Endpoint actualizado: /productos/id/:id/estado
+      const updatedProduct = await putData(`/productos/id/${product._id}/estado`, { estado: newEstado });
+      if (updatedProduct) {
+        $q.notify({ type: 'positive', message: `Producto "${product.nombre}" ${newEstado} correctamente.` });
+        await fetchProductos(); // Recargar la tabla
+      } else {
+        $q.notify({ type: 'negative', message: `Error al cambiar el estado de "${product.nombre}".` });
+      }
+    } catch (error) {
+      console.error('Error al cambiar estado:', error);
+      $q.notify({ type: 'negative', message: 'Error al procesar el cambio de estado.' });
+    } finally {
+      loadingTable.value = false;
+    }
+  });
+};
+
+// --- Funciones para la gestión de Ofertas ---
+
+// Abre el diálogo para activar/editar una oferta
+const openOfertaDialog = (product) => {
+  offerToEdit.value = JSON.parse(JSON.stringify(product));
+  if (product.hasActiveOffer && product.offer) {
+    offerPercentage.value = product.offer.percentage;
+    offerExpirationDate.value = product.offer.expirationDate ? new Date(product.offer.expirationDate).toISOString().split('T')[0] : null;
+  } else {
+    offerPercentage.value = null;
+    offerExpirationDate.value = null;
+  }
+  ofertaDialog.value = true;
+};
+
+// Maneja la activación o actualización de una oferta
+const handleActivarOferta = async () => {
+  if (!offerToEdit.value || !offerPercentage.value || !offerExpirationDate.value) {
+    $q.notify({ type: 'negative', message: 'Por favor, complete todos los campos de la oferta.' });
+    return;
+  }
+
+  if (offerPercentage.value <= 0 || offerPercentage.value > 100) {
+    $q.notify({ type: 'negative', message: 'El porcentaje de descuento debe estar entre 1 y 100.' });
+    return;
+  }
+
+  loading.value = true;
   try {
-    const newEstado = producto.estado === 'activo' ? 'inactivo' : 'activo';
-    await putData(`/producto/id/${producto._id}/estado`, { estado: newEstado });
-    $q.notify({ type: 'positive', message: `Producto "${producto.nombre}" cambiado a ${newEstado}.` });
-    await fetchProductos();
+    const payload = {
+      percentage: offerPercentage.value,
+      expirationDate: offerExpirationDate.value,
+    };
+    const response = await postData(`/productos/id/${offerToEdit.value._id}/oferta`, payload);
+
+    if (response) {
+      $q.notify({ type: 'positive', message: 'Oferta activada/actualizada exitosamente.' });
+      ofertaDialog.value = false;
+      await fetchProductos(); // Recargar la tabla para mostrar los cambios
+    } else {
+      $q.notify({ type: 'negative', message: 'Error al activar/actualizar la oferta.' });
+    }
   } catch (error) {
-    console.error('Error al cambiar estado:', error);
-    $q.notify({ type: 'negative', message: 'Error al cambiar el estado del producto.' });
+    console.error('Error al activar/actualizar oferta:', error);
+    $q.notify({ type: 'negative', message: 'Error al procesar la oferta.' });
   } finally {
-    loadingTable.value = false;
+    loading.value = false;
+  }
+};
+
+// Confirma y desactiva una oferta
+const confirmDesactivarOferta = (product) => {
+  $q.dialog({
+    title: 'Confirmar Eliminación de Oferta',
+    message: `¿Estás seguro de que quieres quitar la oferta de "${product.nombre}"?`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    loadingTable.value = true;
+    try {
+      const response = await deleteData(`/productos/id/${product._id}/oferta`);
+      if (response) {
+        $q.notify({ type: 'positive', message: 'Oferta desactivada exitosamente.' });
+        await fetchProductos();
+      } else {
+        $q.notify({ type: 'negative', message: 'Error al desactivar la oferta.' });
+      }
+    } catch (error) {
+      console.error('Error al desactivar oferta:', error);
+      $q.notify({ type: 'negative', message: 'Error al procesar la desactivación de la oferta.' });
+    } finally {
+      loadingTable.value = false;
+    }
+  });
+};
+
+// Alterna el filtro para mostrar solo productos con ofertas
+const toggleOfertasFilter = () => {
+  showOfertasOnly.value = !showOfertasOnly.value;
+  if (showOfertasOnly.value) {
+    $q.notify({ type: 'info', message: 'Mostrando solo productos con ofertas activas.' });
+  } else {
+    $q.notify({ type: 'info', message: 'Mostrando todos los productos.' });
   }
 };
 
 
-// --- Funciones de manejo de archivos e imágenes ---
+// --- Funciones de utilidad ---
 
-// Maneja la selección de una sola imagen para el formulario de agregar producto
-const handleSingleFileChange = (event, index) => {
-  const file = event.target.files[0];
-  if (file) {
-    images.value[index] = file;
-    imagePreviews.value[index] = URL.createObjectURL(file);
-    imageNames.value[index] = file.name;
+// Formatea un número como moneda
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP', // Moneda de Colombia
+    minimumFractionDigits: 0, // No mostrar decimales para valores enteros
+    maximumFractionDigits: 0 // No mostrar decimales para valores enteros
+  }).format(value);
+};
+
+// Calcula el precio final con el descuento de oferta
+const calculateFinalPrice = (product) => {
+  if (product.hasActiveOffer && product.offer && product.offer.percentage) {
+    return product.price * (1 - (product.offer.percentage / 100));
   }
+  return product.price;
 };
 
-// Elimina una imagen del formulario de agregar producto
-const removeImage = (index) => {
-  images.value.splice(index, 1);
-  imagePreviews.value.splice(index, 1);
-  imageNames.value.splice(index, 1);
-};
+// --- Ciclo de vida ---
 
-// Maneja la selección de una sola imagen para el formulario de editar producto
-const handleSingleEditFileChange = (event, index) => {
-  const file = event.target.files[0];
-  if (file) {
-    editImages.value[index] = file;
-    editImagePreviews.value[index] = URL.createObjectURL(file);
-  }
-};
-
-// Elimina una imagen del formulario de editar producto
-const removeEditImage = (index) => {
-  editImages.value.splice(index, 1);
-  editImagePreviews.value.splice(index, 1);
-};
-
-// --- Limpiar el formulario de agregar producto ---
-const resetAddForm = () => {
-  productName.value = '';
-  productMarca.value = null;
-  marcaImageFileAdd.value = null;
-  marcaImagePreviewAdd.value = null;
-  productTipo.value = null;
-  productDescription.value = '';
-  productPrice.value = '';
-  productStock.value = '';
-  categoryId.value = '';
-  images.value = [];
-  imagePreviews.value = [];
-  imageNames.value = [];
-};
-
-
+onMounted(async () => {
+  await fetchCategories();
+  await fetchMarcas();
+  await fetchTipos();
+  await fetchProductos();
+});
 
 </script>
 
-
+<style scoped>
+/* Agrega estilos si es necesario */
+.q-table__container {
+  box-shadow: none;
+}
+</style>
 <style scoped>
 /* Estilos para el formulario de agregar producto */
 .add-product-container {
