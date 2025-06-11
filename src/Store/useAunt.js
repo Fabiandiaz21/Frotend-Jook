@@ -1,3 +1,4 @@
+// stores/useAunt.js
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { jwtDecode } from 'jwt-decode';
@@ -28,8 +29,8 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = null;
     user.value = null;
     userRole.value = null;
-    // Elimina los datos persistidos por pinia-plugin-persist
-    localStorage.removeItem('auth'); // 'auth' es la clave que definiste en persist.strategies.key
+    favorites.value = []; // ← Aquí se limpian los favoritos
+    localStorage.removeItem('auth'); // 'auth' es la clave de persistencia
   };
 
   const isLoggedIn = () => {

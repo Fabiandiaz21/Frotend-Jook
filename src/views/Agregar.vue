@@ -1145,7 +1145,7 @@ const cambiarEstado = async (product) => {
     loadingTable.value = true;
     try {
       // Endpoint actualizado: /productos/id/:id/estado
-      const updatedProduct = await putData(`/productos/id/${product._id}/estado`, { estado: newEstado });
+      const updatedProduct = await putData(`/producto/id/${product._id}/estado`, { estado: newEstado });
       if (updatedProduct) {
         $q.notify({ type: 'positive', message: `Producto "${product.nombre}" ${newEstado} correctamente.` });
         await fetchProductos(); // Recargar la tabla
@@ -1194,7 +1194,7 @@ const handleActivarOferta = async () => {
       percentage: offerPercentage.value,
       expirationDate: offerExpirationDate.value,
     };
-    const response = await postData(`/productos/id/${offerToEdit.value._id}/oferta`, payload);
+    const response = await postData(`/producto/id/${offerToEdit.value._id}/oferta`, payload);
 
     if (response) {
       $q.notify({ type: 'positive', message: 'Oferta activada/actualizada exitosamente.' });
@@ -1221,7 +1221,7 @@ const confirmDesactivarOferta = (product) => {
   }).onOk(async () => {
     loadingTable.value = true;
     try {
-      const response = await deleteData(`/productos/id/${product._id}/oferta`);
+      const response = await deleteData(`/producto/id/${product._id}/oferta`);
       if (response) {
         $q.notify({ type: 'positive', message: 'Oferta desactivada exitosamente.' });
         await fetchProductos();
