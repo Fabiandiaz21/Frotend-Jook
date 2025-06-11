@@ -276,6 +276,7 @@ const handleItemClick = (item) => {
 
 const logout = () => {
   showLogoutModal.value = false;
+
   $q.notify({
     type: "positive",
     message: "Sesión cerrada correctamente",
@@ -284,6 +285,8 @@ const logout = () => {
   });
 
   authStore.clearAuth();
+  cartStore.clearCart(); // <-- Limpia el carrito al cerrar sesión
+
   setTimeout(() => {
     router.push("/");
   }, 1000);
