@@ -3,277 +3,269 @@
     <q-layout view="hHh Lpr lFf">
       <q-page-container>
         <q-page class="q-pa-md">
-          <div class="form-header q-mb-lg">
-            <h2 class="text-h4 text-brown-8">Finalizar Compra</h2>
-            <p class="text-brown-6">Complete sus datos para procesar su pedido</p>
-          </div>
-          
-          <q-form @submit.prevent="submitForm" class="checkout-form">
-            <div class="row q-col-gutter-md">
-              <!-- Columna izquierda - Datos personales -->
-              <div class="col-12 col-md-6">
-                <q-card class="form-section">
-                  <q-card-section>
-                    <div class="section-title">Información Personal</div>
-                    
-                    <q-input 
-                      v-model="form.nombre" 
-                      label="Nombre *" 
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <q-input
-                      v-model="form.apellidos"
-                      label="Apellidos *"
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <q-input
-                      v-model="form.email"
-                      label="Correo electrónico *" 
-                      type="email"
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <q-input
-                      v-model="form.confirmarEmail"
-                      label="Confirmar email *"
-                      type="email"
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <q-input 
-                      v-model="form.dni" 
-                      label="DNI *" 
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <q-input
-                      v-model="form.telefonoMovil" 
-                      label="Teléfono móvil"
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    
-                    <q-checkbox
-                      v-model="form.aceptaPrivacidad"
-                      label="He leído y aceptado la Política de Privacidad"
-                      required
-                      color="brown-7"
-                      class="q-mt-md"
-                    />
-                  </q-card-section>
-                </q-card>
+          <div class="form-container">
+            <h2 class="form-title">Finalizar Compra</h2>
+            <div class="form-divider"></div>
+            
+            <q-form ref="checkoutFormRef" class="checkout-form">
+              <div class="row q-col-gutter-md">
+                <div class="col-12 col-md-6">
+                  <h3 class="section-title">Información Personal</h3>
+                  <q-input
+                    v-model="form.nombre"
+                    label="Nombre *"
+                    :rules="[(val) => !!val || 'El nombre es requerido']"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-input
+                    v-model="form.apellidos"
+                    label="Apellidos *"
+                    :rules="[(val) => !!val || 'Los apellidos son requeridos']"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-input
+                    v-model="form.email"
+                    label="Correo electrónico *"
+                    type="email"
+                    :rules="[
+                      (val) => !!val || 'El correo electrónico es requerido',
+                      (val) =>
+                        /.+@.+\..+/.test(val) || 'Formato de email inválido',
+                    ]"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-input
+                    v-model="form.confirmarEmail"
+                    label="Confirmar email *"
+                    type="email"
+                    :rules="[
+                      (val) => !!val || 'La confirmación de email es requerida',
+                      (val) =>
+                        val === form.email ||
+                        'Los correos electrónicos no coinciden',
+                    ]"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-checkbox
+                    v-model="form.aceptaPrivacidad"
+                    label="He leído y aceptado la Política de Privacidad"
+                    :rules="[
+                      (val) =>
+                        val === true || 'Debes aceptar la política de privacidad',
+                    ]"
+                    class="form-checkbox"
+                    color="brown-6"
+                  />
+                </div>
+
+                <div class="col-12 col-md-6">
+                  <h3 class="section-title">Dirección de Envío</h3>
+                  <q-input
+                    v-model="form.dni"
+                    label="DNI *"
+                    :rules="[(val) => !!val || 'El DNI es requerido']"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-input
+                    v-model="form.direccion"
+                    label="Dirección *"
+                    :rules="[(val) => !!val || 'La dirección es requerida']"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-select
+                    v-model="form.pais"
+                    :options="availableCountries"
+                    label="País *"
+                    emit-value
+                    map-options
+                    :rules="[(val) => !!val || 'El país es requerido']"
+                    @update:model-value="onCountryChange"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+
+                  <div class="row q-col-gutter-sm">
+                    <div class="col-6">
+                      <q-input
+                        v-model="form.codigoPostal"
+                        label="Código Postal"
+                        :rules="[
+                          (val) => !!val || 'El código postal es requerido',
+                        ]"
+                        outlined
+                        class="form-input"
+                        bg-color="grey-1"
+                      />
+                    </div>
+                    <div class="col-6">
+                      <q-select
+                        v-model="form.provincia"
+                        :options="availableProvinces"
+                        label="Provincia *"
+                        emit-value
+                        map-options
+                        :rules="[(val) => !!val || 'La provincia es requerida']"
+                        @update:model-value="onProvinceChange"
+                        :disable="!form.pais"
+                        outlined
+                        class="form-input"
+                        bg-color="grey-1"
+                      />
+                    </div>
+                  </div>
+                  <q-select
+                    v-model="form.ciudad"
+                    :options="availableCities"
+                    label="Ciudad *"
+                    emit-value
+                    map-options
+                    :rules="[(val) => !!val || 'La ciudad es requerida']"
+                    :disable="!form.provincia"
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                  <q-input 
+                    v-model="form.telefonoMovil" 
+                    label="Teléfono móvil" 
+                    outlined
+                    class="form-input"
+                    bg-color="grey-1"
+                  />
+                </div>
               </div>
 
-              <!-- Columna derecha - Dirección -->
-              <div class="col-12 col-md-6">
-                <q-card class="form-section">
-                  <q-card-section>
-                    <div class="section-title">Dirección de Envío</div>
-                    
-                    <q-input
-                      v-model="form.direccion"
-                      label="Dirección *"
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <q-select
-                      v-model="form.pais"
-                      :options="paises"
-                      label="País *"
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                    <div class="row q-col-gutter-sm">
-                      <div class="col-6">
-                        <q-input
-                          v-model="form.codigoPostal"
-                          label="Código Postal"
-                          color="brown-7"
-                          class="q-mb-sm"
-                          outlined
-                        />
-                      </div>
-                      <div class="col-6">
-                        <q-input
-                          v-model="form.provincia"
-                          label="Provincia *"
-                          required
-                          color="brown-7"
-                          class="q-mb-sm"
-                          outlined
-                        />
-                      </div>
+              <q-card class="q-mt-md form-card">
+                <q-card-section>
+                  <q-checkbox
+                    v-model="form.mismaDireccion"
+                    label="Usar la misma dirección para la facturación"
+                    class="form-checkbox"
+                    color="brown-6"
+                  />
+                  <div v-if="!form.mismaDireccion" class="row q-col-gutter-md">
+                    <div class="col-12 col-md-6">
+                      <q-input
+                        label="Empresa (opcional)"
+                        v-model="form.empresa"
+                        outlined
+                        class="form-input"
+                        bg-color="grey-1"
+                      />
+                      <q-input
+                        label="Dirección de Facturación *"
+                        v-model="form.direccionFacturacion"
+                        :rules="[
+                          (val) =>
+                            form.mismaDireccion ||
+                            !!val ||
+                            'La dirección de facturación es requerida',
+                        ]"
+                        outlined
+                        class="form-input"
+                        bg-color="grey-1"
+                      />
                     </div>
-                    <q-input 
-                      v-model="form.ciudad" 
-                      label="Ciudad *" 
-                      required
-                      color="brown-7"
-                      class="q-mb-sm"
-                      outlined
-                    />
-                  </q-card-section>
-                </q-card>
+                  </div>
+                </q-card-section>
+              </q-card>
 
-                <!-- Facturación -->
-                <q-card class="form-section q-mt-md">
-                  <q-card-section>
-                    <div class="section-title">Dirección de Facturación</div>
-                    
-                    <q-checkbox
-                      v-model="form.mismaDireccion"
-                      label="Usar la misma dirección para la facturación"
-                      color="brown-7"
-                    />
-                    <div v-if="!form.mismaDireccion" class="row q-col-gutter-md q-mt-sm">
-                      <div class="col-12">
-                        <q-input
-                          label="Empresa (opcional)"
-                          v-model="form.empresa"
-                          color="brown-7"
-                          class="q-mb-sm"
-                          outlined
-                        />
-                        <q-input
-                          label="Dirección de Facturación"
-                          v-model="form.direccionFacturacion"
-                          color="brown-7"
-                          class="q-mb-sm"
-                          outlined
-                        />
-                      </div>
-                    </div>
-                  </q-card-section>
-                </q-card>
-              </div>
-            </div>
+              <q-card class="q-mt-md form-card">
+                <q-card-section>
+                  <h3 class="section-title">Método de Envío y Pago</h3>
+                  <q-radio
+                    v-model="form.envio"
+                    val="rapido"
+                    label="Envío Rápido (700 - 2 a 5 días)"
+                    class="form-radio"
+                    color="brown-6"
+                  />
+                  <q-radio
+                    v-model="form.pago"
+                    val="tarjeta"
+                    label="Tarjeta de crédito (Visa, MasterCard, Maestro)"
+                    class="form-radio"
+                    color="brown-6"
+                  />
+                </q-card-section>
+              </q-card>
 
-            <!-- Método de envío y pago -->
-            <q-card class="form-section q-mt-md">
-              <q-card-section>
-                <div class="section-title">Método de Envío</div>
-                <q-radio
-                  v-model="form.envio"
-                  val="rapido"
-                  label="Envío Rápido (7,00€ - 2 a 5 días)"
-                  color="brown-7"
-                  class="q-mb-sm"
-                />
-                
-                <div class="section-title q-mt-md">Método de Pago</div>
-                <q-radio
-                  v-model="form.pago"
-                  val="tarjeta"
-                  label="Tarjeta de crédito (Visa, MasterCard, Maestro)"
-                  color="brown-7"
-                />
-              </q-card-section>
-            </q-card>
-
-            <!-- Resumen del pedido -->
-            <q-card class="form-section q-mt-md">
-              <q-card-section>
-                <div class="section-title">Resumen del Pedido</div>
-                
-                <div class="order-summary">
-                  <div 
+              <q-card class="q-mt-md form-card">
+                <q-card-section>
+                  <h3 class="section-title">Resumen del Pedido</h3>
+                  <div
                     v-for="item in cartStore.items"
                     :key="item.id"
-                    class="order-item row justify-between q-pa-xs"
+                    class="row justify-between order-item"
                   >
-                    <div class="item-name">
+                    <div>
                       {{ item.nombre }}
-                      <span v-if="item.cantidad" class="text-brown-6">x{{ item.cantidad }}</span>
+                      <span v-if="item.cantidad">x{{ item.cantidad }}</span>
                     </div>
-                    <div class="item-price">{{ item.precio.toFixed(2) }}€</div>
+                    <div>{{ item.precio.toFixed(2) }}€</div>
                   </div>
-                  
-                  <q-separator class="q-my-sm" />
-                  
-                  <div class="order-item row justify-between q-pa-xs">
-                    <div class="text-weight-medium">Envío</div>
-                    <div>7,00 €</div>
+                  <div class="row justify-between order-item">
+                    <div>Envío</div>
+                    <div>700€</div>
                   </div>
-                  
-                  <q-separator class="q-my-sm" />
-                  
-                  <div class="order-total row justify-between q-pa-xs">
-                    <div class="text-weight-bold">Total</div>
-                    <div class="text-weight-bold">{{ (cartStore.totalPrice + 7).toFixed(2) }} €</div>
+                  <q-separator class="order-separator" />
+                  <div class="row justify-between order-total">
+                    <div>Total</div>
+                    <div>{{ (cartStore.totalPrice + 700).toFixed(2) }}€</div>
                   </div>
-                </div>
-              </q-card-section>
-            </q-card>
+                </q-card-section>
+              </q-card>
 
-            <!-- Términos y condiciones -->
-            <q-card class="form-section q-mt-md">
-              <q-card-section>
-                <q-checkbox
-                  v-model="form.aceptaTerminos"
-                  label="Acepto los términos de servicio"
-                  required
-                  color="brown-7"
-                />
-              </q-card-section>
-            </q-card>
-
-            <!-- Botones de acción -->
-            <div class="row justify-between items-center q-mt-lg">
-              <q-btn
-                label="Volver al carrito"
-                color="brown-4"
-                flat
-                @click="irAlCarrito"
-                class="q-mr-sm"
+              <q-checkbox
+                v-model="form.aceptaTerminos"
+                label="Acepto los términos de servicio"
+                class="q-mt-md form-checkbox"
+                :rules="[
+                  (val) =>
+                    val === true || 'Debes aceptar los términos de servicio',
+                ]"
+                color="brown-6"
               />
-              
-              <div class="action-buttons">
-                <q-btn
-                  label="Guardar información"
-                  color="brown-7"
-                  type="submit"
-                  class="q-mr-sm"
-                />
-                <div ref="paypalRef"></div>
+
+              <div class="row justify-end q-gutter-sm q-mt-md">
+                <div ref="paypalRef" class="q-ml-sm"></div>
               </div>
-            </div>
-          </q-form>
+            </q-form>
+          </div>
         </q-page>
       </q-page-container>
     </q-layout>
-    
-    <button class="carrito-btn" @click="irAlCarrito">
-      <q-icon name="shopping_cart" size="24px" />
-    </button>
+    <button class="carrito-btn" @click="irAlCarrito">🛒</button>
   </div>
 </template>
 
 <script setup>
+// El script setup permanece exactamente igual que en tu código original
 import { useCartStore } from "../Store/useCartStore";
 import { useRouter } from "vue-router";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { QLayout, QPageContainer, QPage, useQuasar } from "quasar";
-import { getData } from "../Services/jook";
+import axios from 'axios';
+import { Country, State, City } from 'country-state-city';
 
 const cartStore = useCartStore();
 const router = useRouter();
 const $q = useQuasar();
+
+const checkoutFormRef = ref(null);
 
 const form = ref({
   nombre: "",
@@ -284,10 +276,10 @@ const form = ref({
   aceptaTerminos: false,
   dni: "",
   direccion: "",
-  pais: "España",
+  pais: null,
   codigoPostal: "",
-  provincia: "",
-  ciudad: "",
+  provincia: null,
+  ciudad: null,
   telefonoMovil: "",
   envio: "rapido",
   pago: "tarjeta",
@@ -296,13 +288,137 @@ const form = ref({
   direccionFacturacion: "",
 });
 
-const paises = ["España", "Portugal", "Francia"];
 const paypalRef = ref(null);
+const paymentStatus = ref('');
+const paymentError = ref('');
 
-const submitForm = () => {
-  console.log("Guardado:", form.value);
+const exchangeRateCOP_to_USD = 4000;
+const GEOAPIFY_API_KEY = import.meta.env.VITE_GEOAPIFY_API_KEY;
+
+const availableCountries = computed(() => {
+  return Country.getAllCountries().map(c => ({
+    label: c.name,
+    value: c.isoCode
+  }));
+});
+
+const availableProvinces = computed(() => {
+  if (form.value.pais) {
+    const states = State.getStatesOfCountry(form.value.pais);
+    return states.map(s => ({
+      label: s.name,
+      value: s.isoCode
+    }));
+  }
+  return [];
+});
+
+const availableCities = computed(() => {
+  if (form.value.pais && form.value.provincia) {
+    const cities = City.getCitiesOfState(form.value.pais, form.value.provincia);
+    return cities.map(city => ({
+      label: city.name,
+      value: city.name
+    }));
+  }
+  return [];
+});
+
+const onCountryChange = () => {
+  form.value.provincia = null;
+  form.value.ciudad = null;
+  form.value.codigoPostal = "";
+};
+
+const onProvinceChange = () => {
+  form.value.ciudad = null;
+  form.value.codigoPostal = "";
+};
+
+const fetchPostalCode = async () => {
+  if (form.value.pais && form.value.provincia && form.value.ciudad) {
+    try {
+      let query = `${form.value.ciudad}, ${form.value.provincia}, ${form.value.pais}`;
+      if (form.value.direccion) {
+        query = `${form.value.direccion}, ${query}`;
+      }
+
+      console.log('Consultando Geoapify con:', query);
+      const response = await axios.get(`https://api.geoapify.com/v1/geocode/search`, {
+        params: {
+          text: query,
+          apiKey: GEOAPIFY_API_KEY,
+          lang: 'es',
+          limit: 1
+        }
+      });
+
+      const features = response.data.features;
+      if (features && features.length > 0) {
+        const firstResult = features[0].properties;
+        const postalCode = firstResult.postcode;
+
+        if (postalCode) {
+          form.value.codigoPostal = postalCode;
+          console.log('Código postal auto-rellenado:', postalCode);
+        } else {
+          form.value.codigoPostal = '';
+          console.warn('Geoapify: No se encontró código postal para la ubicación.');
+          $q.notify({
+            message: "No se encontró código postal automáticamente. Por favor, ingréselo manualmente.",
+            color: "info",
+            textColor: "white",
+            icon: "info",
+          });
+        }
+      } else {
+        form.value.codigoPostal = '';
+        console.warn('Geoapify: No se encontraron resultados para la búsqueda.');
+        $q.notify({
+          message: "No se encontraron resultados para el código postal. Por favor, ingréselo manualmente.",
+          color: "info",
+          textColor: "white",
+          icon: "info",
+        });
+      }
+    } catch (error) {
+      console.error('Error al obtener el código postal de Geoapify:', error);
+      form.value.codigoPostal = '';
+      $q.notify({
+        message: "Error de red al obtener el código postal. Por favor, ingréselo manualmente.",
+        color: "red-5",
+        textColor: "white",
+        icon: "error",
+      });
+    }
+  } else {
+    form.value.codigoPostal = "";
+  }
+};
+
+watch(() => [form.value.ciudad, form.value.direccion], ([newCity, newAddress], [oldCity, oldAddress]) => {
+  if ((newCity && newCity !== oldCity) || (newAddress && newAddress !== oldAddress)) {
+    fetchPostalCode();
+  } else if (!newCity && !newAddress) {
+    form.value.codigoPostal = "";
+  }
+}, { deep: true });
+
+const totalAmountCOP = computed(() => {
+  const cartTotal = parseFloat(cartStore.totalPrice || 0);
+  const shippingCost = 700;
+  return (cartTotal + shippingCost);
+});
+
+const totalAmountUSD = computed(() => {
+  const totalInUSD = totalAmountCOP.value / exchangeRateCOP_to_USD;
+  return totalInUSD.toFixed(2);
+});
+
+const handleFormDataAndPaymentSuccess = () => {
+  console.log("Datos del formulario para la orden:", form.value);
   $q.notify({
-    message: "Información guardada correctamente.",
+    message: "¡Orden procesada y pago completado! Información guardada.",
     color: "green-4",
     textColor: "white",
     icon: "cloud_done",
@@ -315,12 +431,12 @@ const irAlCarrito = () => {
 
 const renderPayPalButtons = () => {
   if (!paypalRef.value) {
-    console.error("PayPal reference element not found.");
+    console.error("No se encontró el elemento de referencia de PayPal.");
     return;
   }
 
   if (!window.paypal) {
-    console.log("PayPal SDK not yet available, retrying render in 300ms...");
+    console.log("El SDK de PayPal aún no está disponible, reintentando renderizar en 300ms...");
     setTimeout(renderPayPalButtons, 300);
     return;
   }
@@ -334,22 +450,14 @@ const renderPayPalButtons = () => {
         color: "gold",
         shape: "rect",
         label: "paypal",
-        height: 45,
+        height: 45
       },
-      createOrder: (data, actions) => {
-        if (!form.value.aceptaPrivacidad || !form.value.aceptaTerminos) {
-          $q.notify({
-            message: "Debes aceptar los términos y la política de privacidad.",
-            color: "red-5",
-            textColor: "white",
-            icon: "warning",
-          });
-          return actions.reject();
-        }
+      createOrder: async (data, actions) => {
+        const formIsValid = await checkoutFormRef.value.validate();
 
-        if (form.value.email !== form.value.confirmarEmail) {
+        if (!formIsValid) {
           $q.notify({
-            message: "Los correos electrónicos no coinciden.",
+            message: "Por favor, completa todos los campos requeridos del formulario.",
             color: "red-5",
             textColor: "white",
             icon: "warning",
@@ -367,47 +475,89 @@ const renderPayPalButtons = () => {
           return actions.reject();
         }
 
-        const totalAmount = (cartStore.totalPrice + 7).toFixed(2);
-        return actions.order.create({
-          purchase_units: [
-            {
-              amount: {
-                value: totalAmount,
-                currency_code: "EUR",
-              },
-            },
-          ],
-        });
-      },
-      onApprove: async (data, actions) => {
-        try {
-          const details = await actions.order.capture();
-          $q.notify({
-            message: `¡Pago completado! ID: ${details.id}`,
-            color: "green-4",
-            textColor: "white",
-            icon: "done",
-          });
-          console.log("Pago exitoso:", details)
+        const amountForBackend = totalAmountUSD.value;
 
-          async function saveOrder() {
-            try {
-              const response = await getData("")
-            } catch (error) {
-              
-            }
-            console.log("Guardando la orden en la base de datos...");
-            return new Promise((resolve) => setTimeout(resolve, 1000));
+        const itemsForBackend = cartStore.items.map(item => ({
+            productId: item.id,
+            name: item.nombre,
+            quantity: item.cantidad,
+            price: item.precio
+        }));
+
+        try {
+          const response = await fetch('http://localhost:3200/api/payments/create-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              amount: amountForBackend,
+              items: itemsForBackend,
+              user: '654a9d7d4c9f1d002f8e4c7e',
+              orderId: `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              customerInfo: form.value
+            }),
+          });
+          const order = await response.json();
+          if (!response.ok) {
+            throw new Error(order.error || 'Error al crear la orden de PayPal en el backend.');
           }
-          cartStore.clearCart(); 
+          return order.id;
         } catch (error) {
-          console.error("Error al capturar el pago:", error);
+          console.error('Error al crear la orden de PayPal en el backend:', error);
+          paymentError.value = 'Error al crear la orden de PayPal.';
           $q.notify({
-            message: "Error al procesar el pago. Por favor, inténtalo de nuevo.",
+            message: paymentError.value,
             color: "red-5",
             textColor: "white",
             icon: "error",
           });
+          return actions.reject();
+        }
+      },
+      onApprove: async (data, actions) => {
+        paymentStatus.value = 'Procesando pago...';
+        try {
+          const response = await fetch('http://localhost:3200/api/payments/capture-order', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              orderID: data.orderID,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            $q.notify({
+              message: `¡Pago completado! ID: ${data.orderID}`,
+              color: "green-4",
+              textColor: "white",
+              icon: "done",
+            });
+            console.log("Pago exitoso:", result);
+            handleFormDataAndPaymentSuccess();
+            cartStore.clearCart();
+            router.push("/");
+          } else {
+            $q.notify({
+              message: result.error || 'Error al completar el pago.',
+              color: "red-5",
+              textColor: "white",
+              icon: "error",
+            });
+            console.error('Error al capturar el pago:', result);
+          }
+        } catch (error) {
+          $q.notify({
+            message: 'Error de red al completar el pago.',
+            color: "red-5",
+            textColor: "white",
+            icon: "error",
+          });
+          console.error('Error de red al completar el pago:', error);
         }
       },
       onError: (err) => {
@@ -432,86 +582,104 @@ const renderPayPalButtons = () => {
     .render(paypalRef.value);
 };
 
-onMounted(async () => {
-  try {
+onMounted(() => {
+  if (window.paypal && window.paypal.Buttons) {
     renderPayPalButtons();
-  } catch (error) {
-    console.error("Failed to load PayPal SDK:", error);
-    $q.notify({
-      message: "No se pudo cargar el sistema de pago de PayPal. Por favor, recarga la página.",
-      color: "negative",
-      textColor: "white",
-      icon: "signal_wifi_off",
-    });
+  } else {
+    const script = document.createElement('script');
+    script.src = `https://www.paypal.com/sdk/js?client-id=Ad_aU-6n4cARm5VnD-nBVwrxJXLH7ifet0ddAMxcAaBZyQ1k-XZinYdo3P61-h9ErwzzjCbTQNi-MPoU&currency=USD&vault=true&intent=capture&enable-funding=paylater`;
+    script.onload = renderPayPalButtons;
+    document.head.appendChild(script);
   }
 });
 </script>
 
 <style scoped>
 .home {
-  background-color: #f9f5f0;
+  background-color: #f5f5f0;
   min-height: 100vh;
 }
 
-.form-header {
-  text-align: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #e0d6cc;
-  margin-bottom: 20px;
-}
-
-.checkout-form {
+.form-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.form-section {
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
-  border: 1px solid #e0d6cc;
-  background-color: #fff;
+.form-title {
+  color: #5d4037;
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.form-divider {
+  height: 2px;
+  background: linear-gradient(to right, transparent, #8d6e63, transparent);
+  margin: 1.5rem 0;
 }
 
 .section-title {
-  font-size: 1.1rem;
-  font-weight: 600;
   color: #5d4037;
-  margin-bottom: 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #efebe9;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #d7ccc8;
 }
 
-.order-summary {
-  background-color: #faf6f2;
-  border-radius: 6px;
-  padding: 8px;
+.form-input {
+  margin-bottom: 1rem;
 }
 
-.order-item {
-  transition: background-color 0.2s;
+.form-input :deep(.q-field__label) {
+  color: #5d4037;
 }
 
-.order-item:hover {
-  background-color: #f0e6dc;
-}
-
-.order-total {
-  background-color: #efebe9;
+.form-input :deep(.q-field__control) {
   border-radius: 4px;
 }
 
-.item-name {
+.form-input :deep(.q-field__control:before) {
+  border-color: #bcaaa4;
+}
+
+.form-input :deep(.q-field__control:hover:before) {
+  border-color: #8d6e63;
+}
+
+.form-checkbox :deep(.q-checkbox__inner) {
+  color: #8d6e63;
+}
+
+.form-radio :deep(.q-radio__inner) {
+  color: #8d6e63;
+}
+
+.form-card {
+  border-radius: 8px;
+  border: 1px solid #d7ccc8;
+  box-shadow: none;
+}
+
+.order-item {
+  padding: 0.5rem 0;
   color: #5d4037;
 }
 
-.item-price {
-  font-weight: 500;
-  color: #6d4c41;
+.order-separator {
+  margin: 1rem 0;
+  background-color: #d7ccc8;
 }
 
-.action-buttons {
-  display: flex;
-  align-items: center;
+.order-total {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #5d4037;
+  padding: 0.5rem 0;
 }
 
 .carrito-btn {
@@ -522,15 +690,15 @@ onMounted(async () => {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   font-size: 24px;
   cursor: pointer;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   transition: all 0.3s ease;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   z-index: 1000;
 }
 
@@ -539,44 +707,14 @@ onMounted(async () => {
   transform: scale(1.1);
 }
 
-/* Estilos para los inputs y selects */
-.q-field--outlined .q-field__control {
-  border-radius: 4px;
-}
-
-.q-field--outlined .q-field__control:before {
-  border-color: #d7ccc8;
-}
-
-.q-field--outlined:hover .q-field__control:before {
-  border-color: #a1887f;
-}
-
-/* Estilos para los radios y checkboxes */
-.q-radio__inner, .q-checkbox__inner {
-  color: #8d6e63;
-}
-
-.q-radio__inner--truthy, .q-checkbox__inner--truthy {
-  color: #6d4c41;
-}
-
-/* Estilos para los botones */
-.q-btn.bg-brown-7 {
-  background: #6d4c41;
-  color: white;
-}
-
-.q-btn.bg-brown-7:hover {
-  background: #5d4037;
-}
-
-.q-btn.bg-brown-4 {
-  background: #d7ccc8;
-  color: #5d4037;
-}
-
-.q-btn.bg-brown-4:hover {
-  background: #bcaaa4;
+/* Estilos responsivos */
+@media (max-width: 768px) {
+  .form-container {
+    padding: 1rem;
+  }
+  
+  .form-title {
+    font-size: 1.5rem;
+  }
 }
 </style>

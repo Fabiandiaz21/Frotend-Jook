@@ -149,7 +149,7 @@ const removeFromFavorites = (productId) => {
 
 const cargarMarcas = async () => {
   try {
-    const res = await axios.get("http://localhost:3000/api/marca"); // Ajusta la URL a tu backend
+    const res = await axios.get("http://localhost:3200/api/marca"); // Ajusta la URL a tu backend
     marcas.value = res.data;
   } catch (error) {
     $q.notify({
