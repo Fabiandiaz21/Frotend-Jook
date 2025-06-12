@@ -36,3 +36,19 @@ export async function cargarFavoritos() {
     });
   }
 }
+
+
+
+export function getPrecioInfo(product) {
+  const tieneOferta =
+    product?.oferta?.activa === true &&
+    product?.oferta?.precioOferta !== undefined &&
+    product?.oferta?.precioOferta !== null &&
+    parseFloat(product.oferta.precioOferta) < product.price;
+
+  return {
+    precioFinal: tieneOferta ? parseFloat(product.oferta.precioOferta) : product.price,
+    precioOriginal: product.price,
+    tieneOferta
+  };
+}

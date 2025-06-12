@@ -33,8 +33,21 @@
               size="1.5em" color="orange" icon="star_border" icon-selected="star" icon-half="star_half" readonly />
             <div v-else class="text-caption text-grey">Sin reseñas</div>
             <div class="text-subtitle2 text-weight-bold q-mt-sm">
-              {{ product.price ? `$${product.price.toFixed(2)}` : 'Precio no disponible' }}
+              <template v-if="getPrecioInfo(product).tieneOferta">
+                <span class="text-negative">
+                  ${{ formatNumberWithThousandsSeparator(getPrecioInfo(product).precioFinal) }}
+                </span>
+                <span class="text-grey-5 text-strike q-ml-sm">
+                  ${{ formatNumberWithThousandsSeparator(getPrecioInfo(product).precioOriginal) }}
+                </span>
+              </template>
+              <template v-else>
+                <span>
+                  ${{ formatNumberWithThousandsSeparator(getPrecioInfo(product).precioFinal) }}
+                </span>
+              </template>
             </div>
+
           </q-card-section>
 
           <q-card-section class="q-pt-none">
@@ -63,6 +76,8 @@ import { useRoute } from 'vue-router';
 import { getData } from '../services/jook'; // Asegúrate de que esta ruta sea correcta
 import { useQuasar } from 'quasar';
 import { useCartStore } from '../Store/useCartStore';
+import { formatNumberWithThousandsSeparator, getPrecioInfo } from '../utils/utils.js';
+
 
 const route = useRoute();
 const $q = useQuasar();

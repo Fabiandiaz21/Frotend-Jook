@@ -3,7 +3,7 @@
     <div v-if="loading" class="text-center q-py-lg">
       <q-spinner-dots color="primary" size="3em" />
       <div class="q-mt-md">Cargando productos de {{ marcaSeleccionada || 'la marca' }}...</div>
-      </div>
+    </div>
 
     <div v-else-if="error" class="text-center q-py-lg text-negative">
       <q-icon name="error" size="2em" />
@@ -19,7 +19,19 @@
             <q-card-section>
               <div class="text-h6">{{ producto.nombre }}</div>
               <div class="text-subtitle2">{{ producto.marca.nombre }}</div>
-              <div class="text-body1 text-weight-bold">${{ producto.price }}</div>
+              <div class="text-body1 text-weight-bold">
+                <template v-if="getPrecioInfo(producto).tieneOferta">
+                  <span class="text-negative">
+                    ${{ formatNumberWithThousandsSeparator(getPrecioInfo(producto).precioFinal) }}
+                  </span>
+                  <span class="text-grey-5 text-strike q-ml-sm">
+                    ${{ formatNumberWithThousandsSeparator(getPrecioInfo(producto).precioOriginal) }}
+                  </span>
+                </template>
+                <template v-else>
+                  ${{ formatNumberWithThousandsSeparator(getPrecioInfo(producto).precioFinal) }}
+                </template>
+              </div>
             </q-card-section>
             <q-card-actions align="right">
               <q-btn flat round color="primary" icon="visibility" @click="viewProduct(producto._id)" />
@@ -41,6 +53,8 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { getData } from '../services/jook';
 import { useCartStore } from '../Store/useCartStore';
+import { formatNumberWithThousandsSeparator, getPrecioInfo } from '../utils/utils.js';
+
 
 const cartStore = useCartStore();
 const route = useRoute();
