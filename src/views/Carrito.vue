@@ -17,8 +17,8 @@
             <div class="item-right-section">
               <div class="item-info">
                 <h3>{{ item.nombre }}</h3>
-                <p>Precio: ${{ item.precio.toFixed(2) }}</p>
-                <p>Subtotal: ${{ (item.precio * item.cantidad).toFixed(2) }}</p>
+                <p>Precio: ${{ formatNumberWithThousandsSeparator (item.precio.toFixed(2) )}}</p>
+                <p>Subtotal: ${{formatNumberWithThousandsSeparator  ((item.precio * item.cantidad).toFixed(2)) }}</p>
               </div>
               <div class="item-controls">
                 <div class="item-quantity-control">
@@ -37,7 +37,7 @@
         <div class="cart-summary">
           <h2>Resumen del Carrito</h2>
           <p>Total de ítems: {{ cartStore.totalItems }}</p>
-          <p class="total-price">Total a pagar: <strong>${{ cartStore.totalPrice.toFixed(2) }}</strong></p>
+          <p class="total-price">Total a pagar: <strong>${{ formatNumberWithThousandsSeparator (cartStore.totalPrice.toFixed(2) )}}</strong></p>
           <q-btn class="checkout-button" to="/formularioCompra/">Proceder al pago</q-btn>
         </div>
       </div>
@@ -47,6 +47,8 @@
 
 <script setup>
 import { useCartStore } from '../Store/useCartStore';
+import { formatNumberWithThousandsSeparator, getPrecioInfo } from '../utils/utils.js';
+
 
 const cartStore = useCartStore();
 </script>

@@ -14,25 +14,61 @@
           <div class="flecha derecha" @click="imagenSiguiente">&gt;</div>
         </div>
       </div>
+
       <div class="info" v-if="product">
-        <h1>{{ product.nombre }}</h1>
+        <h1>
+          {{ product.nombre }}
+          <q-badge
+            v-if="product.oferta?.activa === true && product.precioOferta && product.precioOferta < product.price"
+            color="red" class="q-ml-sm"> Oferta
+          </q-badge>
+        </h1>
+
         <p class="descripcion">{{ product.descripcion }}</p>
         <p class="ventas">Ventas: (próximamente) | Vendido por <strong>Jook</strong></p>
         <div class="etiqueta" v-if="product.categoryId">Categoría: {{ product.categoryId.name }}</div>
+
+        <!-- Precio -->
         <div class="precio">
-          <span class="actual">${{ formatNumberWithThousandsSeparator(product.price) }}</span>
+          <template
+            v-if="product.oferta?.activa === true && product.oferta?.precioOferta !== undefined && product.oferta?.precioOferta !== null && parseFloat(product.oferta?.precioOferta) < product.price">
+            <span class="actual text-red text-h5">
+              ${{ formatNumberWithThousandsSeparator(product.oferta.precioOferta) }}
+            </span>
+            <span class="original text-grey text-strike q-ml-sm">
+              ${{ formatNumberWithThousandsSeparator(product.price) }}
+            </span>
+          </template>
+
+          <template v-else>
+            <span class="actual">
+              ${{ formatNumberWithThousandsSeparator(product.price) }}
+            </span>
+          </template>
+
+          <template v-else>
+            <span class="actual">${{ formatNumberWithThousandsSeparator(product.price) }}</span>
+          </template>
         </div>
+
         <p class="envio" v-if="product.estado === 'activo'">✓ Producto disponible</p>
+
         <label v-if="product.subtipo">
           Subtipo:
           <input type="text" :value="product.subtipo" readonly />
         </label>
+
         <p>Disponibles: {{ product.stock }} unidades</p>
-        <p v-if="product.marca.nombre">Marca: {{ product.marca.nombre }}</p>
-        <p v-if="product.tipo.nombre">Tipo: {{ product.tipo.nombre }}</p>
-        <button class="boton-carrito" v-if="product.estado === 'activo'" @click="agregarAlCarrito">Añadir al
-          carrito</button>
+        <p v-if="product.marca?.nombre">Marca: {{ product.marca.nombre }}</p>
+        <p v-if="product.tipo?.nombre">Tipo: {{ product.tipo.nombre }}</p>
+
+        <!-- Botón de carrito -->
+        <button class="boton-carrito" v-if="product.estado === 'activo'" @click="agregarAlCarrito">
+          Añadir al carrito
+        </button>
         <button class="boton-carrito" v-else disabled>Producto inactivo</button>
+
+        <!-- Botón de favoritos -->
         <button v-if="authStore.token" class="boton-favorito" :class="{ favorito: esFavorito }" @click="toggleFavorito">
           <q-icon :name="esFavorito ? 'favorite' : 'favorite_border'" />
           {{ esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos' }}
@@ -42,15 +78,18 @@
           <strong>✔ Envío disponible</strong>
           <p>El tiempo de entrega y los costos se calcularán al finalizar la compra.</p>
         </div>
+
         <div class="detalle">
           <strong>✔ Devoluciones sujetas a políticas</strong>
         </div>
+
         <div class="detalle">
           <strong>✔ Seguridad en las compras</strong>
           <p>- Opciones de pago seguro</p>
           <p>- Logística segura</p>
         </div>
       </div>
+
       <div v-else-if="loading">Cargando detalles del producto...</div>
       <div v-else-if="error">{{ error }}</div>
       <div v-else>
@@ -111,7 +150,6 @@
 </template>
 
 <script setup>
-
 import { ref, onMounted, onBeforeUnmount, watch, reactive, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { getData, postData, deleteData } from '../services/jook';
@@ -146,6 +184,10 @@ const cargarProducto = async (id) => {
   try {
     const response = await getData(`/producto/id/${id}`);
     console.log('Respuesta del servidor:', response);
+    console.log('Oferta activa:', response.oferta?.activa);
+    console.log('Precio de oferta:', response.precioOferta);
+    console.log('Precio original:', response.price);
+
     product.value = response;
     loading.value = false;
     if (product.value && product.value.images) {
@@ -234,9 +276,7 @@ const enviarResena = async () => {
       timeout: 2000,
     });
 
-
     await cargarProducto(product.value._id);
-
 
     // Limpiar formulario
     nuevaResena.comentario = '';
@@ -349,7 +389,7 @@ const promedioCalificaciones = computed(() => {
   return (total / product.value.reviews.length).toFixed(1); // por ejemplo, "4.3"
 });
 
-
+// === INICIO DE LA FUNCIÓN agregarAlCarrito CORREGIDA ===
 const agregarAlCarrito = () => {
   // Validaciones antes de añadir al carrito
   if (!product.value) {
@@ -387,21 +427,39 @@ const agregarAlCarrito = () => {
     return;
   }
 
-  // === ¡Ajuste CRÍTICO aquí! ===
-  // Pasamos el objeto con las propiedades que espera el useCartStore
+  // Lógica para determinar el precio final (con o sin oferta)
+  const tieneOfertaActiva = product.value.oferta?.activa === true &&
+    product.value.oferta?.precioOferta !== undefined &&
+    product.value.oferta?.precioOferta !== null &&
+    parseFloat(product.value.oferta?.precioOferta) < product.value.price;
+
+
+  const precioFinal = tieneOfertaActiva
+    ? parseFloat(product.value.oferta.precioOferta)
+    : product.value.price;
+
+
+  // Agregar al carrito usando cartStore
   cartStore.addItem({
-    id: product.value._id,           // El ID del producto
-    nombre: product.value.nombre,    // El nombre
-    precio: product.value.price,     // ¡Aquí mapeamos 'price' de la DB a 'precio' para el store!
-    imagen: product.value.images[0], // La primera imagen
-    cantidad: cantidadSeleccionada.value, // La cantidad que el usuario seleccionó
-    stock: product.value.stock,      // El stock disponible del producto
+    id: product.value._id,
+    nombre: product.value.nombre,
+    precio: precioFinal, // ¡Aquí se usa el precio calculado, que puede ser el de oferta!
+    imagen: product.value.images?.[0], // Primer imagen del array, con encadenamiento opcional
+    cantidad: cantidadSeleccionada.value,
+    stock: product.value.stock,
+  });
+
+  $q.notify({
+    type: 'positive',
+    message: 'Producto añadido al carrito!',
+    position: 'top',
+    timeout: 1500,
   });
 
   // Opcional: Reiniciar la cantidad seleccionada a 1 después de añadir
   cantidadSeleccionada.value = 1;
-
 };
+// === FIN DE LA FUNCIÓN agregarAlCarrito CORREGIDA ===
 
 
 onMounted(() => {
