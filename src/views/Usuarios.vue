@@ -1,93 +1,230 @@
 <template>
-  <q-page class="flex flex-center q-pa-md bg-cafe">
-    <div class="row q-gutter-xl justify-center">
-      <q-card
-        v-for="user in categories"
-        :key="user._id"
-        class="user-card shadow-2"
-        flat
-        bordered
-      >
-        <q-card-section class="bg-cafe-dark text-white text-center">
-          <div class="text-h6">{{ user.name }}</div>
-          <div class="text-subtitle2">{{ user.role }}</div>
-        </q-card-section>
+  <q-page class="q-pa-md bg-white">
+    <q-table title="Usuarios" :rows="categories" :columns="columns" row-key="_id" :loading="loading"
+      :pagination="initialPagination" class="my-sticky-header-table" flat bordered>
+      <template v-slot:body-cell-estado="props">
+        <q-td :props="props">
+          <q-badge :color="props.row.estado === 'Activo' ? 'green' : 'red'" text-color="white" class="q-pa-xs">
+            {{ props.row.estado }}
+          </q-badge>
+        </q-td>
+      </template>
 
-        <q-card-section class="q-pa-md">
-          <div class="q-mb-sm">
-            <div class="text-caption text-bold">Email</div>
-            <div class="text-body2">{{ user.email }}</div>
-          </div>
+      <template v-slot:body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn flat icon="edit" color="brown-7" @click="editarUsuario(props.row)" size="sm" class="q-mr-sm">
+            <q-tooltip>Editar</q-tooltip>
+          </q-btn>
+          <q-btn flat icon="delete" color="red-6" @click="eliminarUsuario(props.row._id)" size="sm">
+            <q-tooltip>Eliminar</q-tooltip>
+          </q-btn>
+        </q-td>
+      </template>
 
-          <div class="q-mb-sm">
-            <div class="text-caption text-bold">Estado</div>
-            <div class="text-body2">{{ user.estado }}</div>
-          </div>
-
-          <div>
-            <div class="text-caption text-bold">Creado</div>
-            <div class="text-body2">{{ formatDate(user.createdAt) }}</div>
-          </div>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-actions align="right" class="q-pa-sm">
-          <q-btn flat label="Editar" color="brown-7" @click="editarUsuario(user)" />
-          <q-btn flat label="Eliminar" color="red-6" @click="eliminarUsuario(user._id)" />
-        </q-card-actions>
-      </q-card>
-    </div>
+      <template v-slot:no-data="{ icon, message, filter }">
+        <div class="full-width row flex-center text-brown-7 q-gutter-sm">
+          <q-icon size="2em" :name="icon" />
+          <span>
+            {{ message }}
+          </span>
+          <q-icon size="2em" :name="filter ? 'filter_list' : 'search'" />
+        </div>
+      </template>
+    </q-table>
   </q-page>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { date, useQuasar } from 'quasar'
-import { postData, getData, putData } from '../Services/jook.js';
+import { ref, onMounted } from 'vue';
+import { date, useQuasar } from 'quasar';
+import { getData } from '../Services/jook.js'; // Asumiendo que postData y putData no son necesarios para la tabla de visualización.
 
-const $q = useQuasar()
-const categories = ref([])
-const loading = ref(true)
+const $q = useQuasar();
+const categories = ref([]);
+const loading = ref(true);
+
+// Definición de las columnas de la tabla
+const columns = [
+  {
+    name: 'name',
+    required: true,
+    label: 'Nombre',
+    align: 'left',
+    field: 'name',
+    sortable: true,
+    classes: 'text-brown-9', // Clase para el texto del nombre
+    headerClasses: 'bg-brown-2 text-brown-9', // Clase para el encabezado
+  },
+  {
+    name: 'email',
+    label: 'Email',
+    align: 'left',
+    field: 'email',
+    sortable: true,
+    classes: 'text-brown-8',
+    headerClasses: 'bg-brown-2 text-brown-9',
+  },
+  {
+    name: 'role',
+    label: 'Rol',
+    align: 'left',
+    field: 'role',
+    sortable: true,
+    classes: 'text-brown-8',
+    headerClasses: 'bg-brown-2 text-brown-9',
+  },
+  {
+    name: 'estado',
+    label: 'Estado',
+    align: 'center',
+    field: 'estado',
+    sortable: true,
+    headerClasses: 'bg-brown-2 text-brown-9',
+  },
+  {
+    name: 'createdAt',
+    label: 'Creado',
+    align: 'center',
+    field: 'createdAt',
+    format: (val) => formatDate(val),
+    sortable: true,
+    classes: 'text-brown-8',
+    headerClasses: 'bg-brown-2 text-brown-9',
+  },
+  {
+    name: 'actions',
+    label: 'Acciones',
+    align: 'center',
+    field: 'actions',
+    headerClasses: 'bg-brown-2 text-brown-9',
+  },
+];
+
+// Configuración inicial de paginación
+const initialPagination = {
+  sortBy: 'createdAt',
+  descending: true,
+  page: 1,
+  rowsPerPage: 10,
+};
 
 const fetchCategories = async () => {
   try {
-    categories.value = await getData('/usuario')
+    categories.value = await getData('/usuario');
   } catch (err) {
-    $q.notify({ type: 'negative', message: 'Error al cargar categorías' })
+    $q.notify({
+      type: 'negative',
+      message: 'Error al cargar usuarios. Intenta de nuevo más tarde.',
+      color: 'red-6',
+      icon: 'error',
+    });
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 function formatDate(dateStr) {
-  return date.formatDate(dateStr, 'YYYY-MM-DD HH:mm')
+  return date.formatDate(dateStr, 'YYYY-MM-DD HH:mm');
 }
 
 function editarUsuario(user) {
-  console.log('Editar usuario:', user)
+  $q.notify({
+    type: 'info',
+    message: `Editando usuario: ${user.name}`,
+    color: 'brown-7',
+    icon: 'edit',
+  });
+  console.log('Editar usuario:', user);
+  // Aquí podrías abrir un diálogo o navegar a una página de edición
 }
 
 function eliminarUsuario(userId) {
-  console.log('Eliminar usuario:', userId)
+  $q.dialog({
+    title: 'Confirmar Eliminación',
+    message: '¿Estás seguro de que quieres eliminar este usuario?',
+    cancel: true,
+    persistent: true,
+    color: 'red-6',
+  })
+    .onOk(() => {
+      // Lógica para eliminar el usuario
+      $q.notify({
+        type: 'positive',
+        message: 'Usuario eliminado exitosamente.',
+        color: 'green-6',
+        icon: 'check_circle',
+      });
+      console.log('Eliminar usuario:', userId);
+      // Actualizar la lista de categorías después de eliminar
+      // fetchCategories(); // Descomentar si la eliminación se maneja en el frontend directamente
+    })
+    .onCancel(() => {
+      $q.notify({
+        type: 'info',
+        message: 'Eliminación cancelada.',
+        color: 'blue-6',
+        icon: 'cancel',
+      });
+    });
 }
 
 onMounted(() => {
-  fetchCategories()
-})
+  fetchCategories();
+});
 </script>
 
 <style scoped>
-.bg-cafe {
-  background-color: #f5efe6; /* Café claro */
+/* Fondo blanco para la página */
+.bg-white {
+  background-color: #ffffff;
 }
 
-.bg-cafe-dark {
-  background-color: #a1887f; /* Café oscuro */
+/* Estilos para la tabla, adaptados de tus colores "café" */
+.my-sticky-header-table {
+  /* Fondo general de la tabla, ajustado para combinar con el blanco */
+  background-color: #fcf8f5;
+  /* Un tono crema muy claro */
+  border-radius: 8px;
+  /* Bordes ligeramente redondeados para la tabla */
 }
 
-.user-card {
-  width: 280px;
-  border-radius: 12px;
+/* Color para el encabezado de la tabla */
+.my-sticky-header-table thead tr:first-child {
+  background-color: #a1887f;
+  /* Café oscuro de tus tarjetas */
+  color: white;
+}
+
+/* Filas impares con un color diferente para mejorar la legibilidad (interactividad visual) */
+.my-sticky-header-table tbody tr:nth-child(odd) {
+  background-color: #f7f2ed;
+  /* Un café aún más claro para filas alternas */
+}
+
+/* Efecto hover en las filas */
+.my-sticky-header-table tbody tr:hover {
+  background-color: #e6dcd4;
+  /* Un café claro distintivo al pasar el mouse */
+  cursor: pointer;
+  /* Indicar que la fila es interactiva */
+}
+
+/* Estilos de texto para las celdas */
+.text-brown-9 {
+  color: #3e2723;
+  /* Café muy oscuro para los nombres y encabezados */
+}
+
+.text-brown-8 {
+  color: #5d4037;
+  /* Un café un poco más claro para otros textos */
+}
+
+/* Clases para los encabezados de las columnas */
+.bg-brown-2 {
+  background-color: #d7ccc8 !important;
+  /* Un tono café claro para los encabezados */
+  color: #3e2723 !important;
+  /* Texto oscuro para contrastar */
 }
 </style>

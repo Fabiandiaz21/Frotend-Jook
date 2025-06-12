@@ -1,43 +1,51 @@
 <template>
   <div class="q-pa-md">
-    <q-card flat bordered class="q-mb-md q-pa-sm">
+
+    <q-card flat bordered class="q-mb-md q-pa-sm control-panel-card">
       <q-card-section>
         <div class="row q-col-gutter-md items-center">
           <div class="col-12 col-md-auto">
-            <q-btn color="primary" icon="add" label="Agregar Producto" @click="dialog = true" />
+            <q-btn color="brown-7" icon="add" label="Agregar Producto" @click="dialog = true" unelevated
+              class="action-btn" />
           </div>
+
           <div class="col-12 col-md-auto">
-            <q-btn color="secondary" icon="sell" label="Nueva Marca" @click="openAddMarcaDialog" />
+            <q-btn color="deep-orange-7" icon="sell" label="Nueva Marca" @click="openAddMarcaDialog" outline
+              class="action-btn" />
           </div>
+
           <div class="col-12 col-md-auto">
-            <q-btn color="accent" icon="category" label="Nuevo Tipo" @click="openAddTipoDialog" />
+            <q-btn color="green-8" icon="category" label="Nuevo Tipo" @click="openAddTipoDialog" unelevated
+              class="action-btn" />
           </div>
+
           <div class="col-12 col-md-auto">
-            <q-btn color="purple" icon="local_offer" label="Ver Ofertas" @click="toggleOfertasFilter" />
+            <q-btn color="purple-8" icon="local_offer" label="Ver Ofertas" @click="toggleOfertasFilter" glossy
+              class="action-btn" />
           </div>
 
           <div class="col-12 col-md-4 q-ml-auto">
-            <q-input outlined dense v-model="searchQuery" label="Buscar producto" clearable>
+            <q-input outlined dense v-model="searchQuery" label="Buscar producto" clearable class="custom-input">
               <template v-slot:append>
-                <q-icon name="search" />
+                <q-icon name="search" class="text-brown-7" />
               </template>
             </q-input>
           </div>
+
           <div class="col-12 col-md-4">
             <q-select outlined dense v-model="filterMarca" :options="uniqueMarcasOptions" label="Filtrar por Marca"
-              clearable use-input input-debounce="0" @filter="filterFnMarca" emit-value map-options>
+              clearable use-input input-debounce="0" @filter="filterFnMarca" emit-value map-options
+              class="custom-input">
               <template v-slot:no-option>
                 <q-item>
-                  <q-item-section class="text-grey">
-                    No hay resultados
-                  </q-item-section>
+                  <q-item-section class="text-grey"> No hay resultados </q-item-section>
                 </q-item>
               </template>
               <template v-slot:option="scope">
                 <q-item v-bind="scope.itemProps">
                   <q-item-section avatar v-if="scope.opt.imagen">
                     <q-avatar rounded size="32px">
-                      <img :src="scope.opt.imagen">
+                      <img :src="scope.opt.imagen" />
                     </q-avatar>
                   </q-item-section>
                   <q-item-section>
@@ -47,26 +55,24 @@
               </template>
             </q-select>
           </div>
+
           <div class="col-12 col-md-4">
             <q-select outlined dense v-model="filterTipo" :options="availableTipos" label="Filtrar por Tipo" clearable
-              use-input input-debounce="0" @filter="filterFnTipo" emit-value map-options>
+              use-input input-debounce="0" @filter="filterFnTipo" emit-value map-options class="custom-input">
               <template v-slot:no-option>
                 <q-item>
-                  <q-item-section class="text-grey">
-                    No hay resultados
-                  </q-item-section>
+                  <q-item-section class="text-grey"> No hay resultados </q-item-section>
                 </q-item>
               </template>
             </q-select>
           </div>
+
           <div class="col-12 col-md-4">
             <q-select outlined dense v-model="filterCategory" :options="categories" label="Filtrar por Categoría"
-              clearable emit-value map-options>
+              clearable emit-value map-options class="custom-input">
               <template v-slot:no-option>
                 <q-item>
-                  <q-item-section class="text-grey">
-                    No hay categorías
-                  </q-item-section>
+                  <q-item-section class="text-grey"> No hay categorías </q-item-section>
                 </q-item>
               </template>
             </q-select>
@@ -75,85 +81,99 @@
       </q-card-section>
     </q-card>
 
-    <q-table title="Lista de Productos" :rows="filteredProductos" :columns="columnas" row-key="_id"
-      :loading="loadingTable">
-      <template v-slot:body-cell-acciones="props">
-        <q-td align="center">
-          <div class="row no-wrap justify-center q-gutter-xs">
-            <q-btn icon="edit" color="primary" dense size="sm" flat @click="openEditDialog(props.row)"
-              class="q-px-xs" />
 
-            <q-btn :icon="props.row.estado === 'activo' ? 'cancel' : 'check'"
-              :color="props.row.estado === 'activo' ? 'negative' : 'positive'" dense size="sm" flat
-              @click="cambiarEstado(props.row)" class="q-px-xs" />
+    <q-page class="q-pa-md bg-white">
+      <q-table title="Lista de Productos" :rows="filteredProductos" :columns="columnas" row-key="_id"
+        :loading="loadingTable" flat bordered class="my-product-table shadow-3 rounded-borders full-width-table" >
+        <template v-slot:body="props">
+          <q-tr :props="props" class="table-row-hover">
+            <q-td v-for="col in props.cols" :key="col.name" :props="props" class="q-pa-sm">
+              <q-item v-if="col.name === 'imagen'" class="justify-center">
+                <img :src="props.row.images?.[0]" alt="imagen del producto" width="60" height="60" class="fade-img"
+                  style="object-fit: cover; border-radius: 8px" />
+              </q-item>
 
-            <q-btn v-if="!props.row.hasActiveOffer" icon="local_offer" color="teal" dense size="sm" flat label="Oferta"
-              @click="openOfertaDialog(props.row)" class="q-px-xs" />
-            <q-btn v-else icon="edit_off" color="orange" dense size="sm" flat label="Editar Oferta"
-              @click="openOfertaDialog(props.row)" class="q-px-xs" />
-            <q-btn v-if="props.row.hasActiveOffer" icon="delete_forever" color="red" dense size="sm" flat
-              label="Quitar Oferta" @click="confirmDesactivarOferta(props.row)" class="q-px-xs" />
+              <q-item v-else-if="col.name === 'marca'" class="items-center q-gutter-sm">
+                <span class="text-brown-8">{{ props.row.marca?.nombre || 'N/A' }}</span>
+              </q-item>
+
+              <div v-else-if="col.name === 'tipo'" class="text-brown-8">
+                {{ props.row.tipo?.nombre || 'N/A' }}
+              </div>
+
+              <q-chip v-else-if="col.name === 'oferta'" :color="props.row.hasActiveOffer ? 'teal' : 'grey'"
+                text-color="white" :icon="props.row.hasActiveOffer ? 'local_offer' : undefined"
+                :label="props.row.hasActiveOffer ? `${props.row.oferta.porcentaje}% Desc.` : 'Sin Oferta'" />
+
+              <div v-else-if="col.name === 'precioFinal'" class="text-right">
+                <span :class="{ 'text-strike text-grey': props.row.hasActiveOffer }">
+                  {{ formatCurrency(props.row.price) }}
+                </span>
+                <br v-if="props.row.hasActiveOffer" />
+                <span v-if="props.row.hasActiveOffer" class="text-bold text-green-8">
+                  {{ formatCurrency(props.row.oferta.precioOferta) }}
+                </span>
+              </div>
+
+              <q-td v-else-if="col.name === 'acciones'" align="center">
+                <div class="row no-wrap justify-center q-gutter-xs">
+                  <q-btn icon="edit" color="brown-7" dense size="sm" flat @click="openEditDialog(props.row)"
+                    class="q-px-xs table-btn">
+                    <q-tooltip>Editar Producto</q-tooltip>
+                  </q-btn>
+                  <q-btn :icon="props.row.estado === 'activo' ? 'cancel' : 'check'"
+                    :color="props.row.estado === 'activo' ? 'red-6' : 'green-6'" dense size="sm" flat
+                    @click="cambiarEstado(props.row)" class="q-px-xs table-btn">
+                    <q-tooltip>{{ props.row.estado === 'activo' ? 'Desactivar' : 'Activar' }} Producto</q-tooltip>
+                  </q-btn>
+                  <q-btn v-if="!props.row.hasActiveOffer" icon="local_offer" color="teal" dense size="sm" flat
+                    label="Oferta" @click="openOfertaDialog(props.row)" class="q-px-xs table-btn">
+                    <q-tooltip>Crear Oferta</q-tooltip>
+                  </q-btn>
+                  <q-btn v-else icon="edit_off" color="orange" dense size="sm" flat label="Editar Oferta"
+                    @click="openOfertaDialog(props.row)" class="q-px-xs table-btn">
+                    <q-tooltip>Editar Oferta Existente</q-tooltip>
+                  </q-btn>
+                  <q-btn v-if="props.row.hasActiveOffer" icon="delete_forever" color="red" dense size="sm" flat
+                    label="Quitar Oferta" @click="confirmDesactivarOferta(props.row)" class="q-px-xs table-btn">
+                    <q-tooltip>Eliminar Oferta</q-tooltip>
+                  </q-btn>
+                </div>
+              </q-td>
+
+              <q-td v-else class="text-brown-8">
+                {{ col.value }}
+              </q-td>
+            </q-td>
+          </q-tr>
+        </template>
+
+        <template v-slot:no-data="{ icon, message, filter }">
+          <div class="full-width row flex-center text-brown-7 q-gutter-sm">
+            <q-icon size="2em" :name="icon" />
+            <span>
+              {{ message }}
+            </span>
+            <q-icon size="2em" :name="filter ? 'filter_list' : 'search'" />
           </div>
-        </q-td>
-      </template>
-
-      <template v-slot:body-cell-imagen="props">
-        <q-td align="center">
-          <img :src="props.row.images?.[0]" alt="imagen del producto" width="60" height="60"
-            style="object-fit: cover; border-radius: 8px;" />
-        </q-td>
-      </template>
-
-      <template v-slot:body-cell-marca="props">
-        <q-td align="left">
-          <div class="row items-center q-gutter-sm">
-            <q-avatar v-if="props.row.marca?.imagen" rounded size="32px">
-              <img :src="props.row.marca.imagen" />
-            </q-avatar>
-          </div>
-        </q-td>
-      </template>
-      <template v-slot:body-cell-tipo="props">
-        <q-td align="left">
-          <span>{{ props.row.tipo?.nombre || 'N/A' }}</span>
-        </q-td>
-      </template>
-
-      <template v-slot:body-cell-oferta="props">
-        <q-td align="center">
-          <q-chip v-if="props.row.hasActiveOffer" color="teal" text-color="white" icon="local_offer"
-            :label="`${props.row.offer?.percentage}% Desc.`" />
-          <q-chip v-else color="grey" text-color="white" label="Sin Oferta" />
-        </q-td>
-      </template>
-
-      <template v-slot:body-cell-precioFinal="props">
-        <q-td align="right">
-          <span :class="{ 'text-strike text-grey': props.row.hasActiveOffer }">{{ formatCurrency(props.row.price)
-          }}</span>
-          <br v-if="props.row.hasActiveOffer" />
-          <span v-if="props.row.hasActiveOffer" class="text-bold text-green-8">
-            {{ formatCurrency(calculateFinalPrice(props.row)) }}
-          </span>
-        </q-td>
-      </template>
-
-    </q-table>
-
+        </template>
+      </q-table>
+    </q-page>
+    
     <q-dialog v-model="editDialog" :persistent="false">
       <q-card style="min-width: 500px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6">Editar Producto</div>
-          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
           <q-form @submit.prevent="handleEditProduct">
             <q-input v-model="productToEdit.nombre" label="Nombre del Producto" outlined dense required />
 
+            <!-- MARCA -->
             <q-select outlined dense v-model="productToEdit.marca" :options="allMarcas" label="Marca" clearable
               use-input input-debounce="0" @filter="filterMarcasEdit" @new-value="addMarcaFromSelect"
-              new-value-mode="add-unique" emit-value map-options>
+              new-value-mode="add-unique" emit-value map-options option-value="_id" option-label="label">
               <template v-slot:no-option>
                 <q-item>
                   <q-item-section class="text-grey">
@@ -175,22 +195,18 @@
               </template>
             </q-select>
 
+            <!-- Imagen marca -->
             <div class="q-mt-sm">
-              <label class="text-subtitle2 text-primary q-mb-sm">Cambiar Imagen de Marca (opcional):</label>
-              <q-file outlined dense v-model="marcaImageFileEdit" label="Seleccionar imagen de marca" accept="image/*">
-                <template v-slot:prepend>
-                  <q-icon name="attach_file" />
-                </template>
-              </q-file>
               <div v-if="marcaImagePreviewEdit" class="q-mt-sm flex flex-center">
                 <img :src="marcaImagePreviewEdit" alt="Marca Preview"
                   style="max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 8px;" />
               </div>
             </div>
 
+            <!-- TIPO -->
             <q-select outlined dense v-model="productToEdit.tipo" :options="allTipos" label="Tipo" clearable use-input
               input-debounce="0" @filter="filterTiposEdit" @new-value="addTipoFromSelect" new-value-mode="add-unique"
-              emit-value map-options>
+              emit-value map-options option-value="_id" option-label="label">
               <template v-slot:no-option>
                 <q-item>
                   <q-item-section class="text-grey">
@@ -202,11 +218,14 @@
 
             <q-input v-model="productToEdit.descripcion" label="Descripción" outlined dense required />
             <q-input v-model="productToEdit.price" label="Precio" type="number" outlined dense required />
+
+            <!-- CATEGORY ID -->
             <q-select v-model="productToEdit.categoryId" :options="categories" label="Categoría" outlined dense
-              emit-value map-options required />
+              emit-value map-options option-value="_id" option-label="nombre" required />
 
             <q-input v-model="productToEdit.stock" label="Stock" type="number" outlined dense required />
 
+            <!-- Imágenes del producto -->
             <div class="q-mt-md">
               <label class="text-subtitle2 text-primary q-mb-sm">Cambiar imágenes del producto (máx. 4):</label>
 
@@ -225,7 +244,6 @@
                     <div class="relative-position" style="width: 150px; height: 150px;">
                       <img :src="img" class="q-img rounded-borders shadow-2"
                         style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;" />
-
                       <q-btn round dense flat size="xs" icon="close" color="negative" class="absolute"
                         style="top: 4px; right: 4px; background-color: white; width: 24px; height: 24px; min-width: 0;"
                         @click="removeEditImage(i)" />
@@ -242,11 +260,11 @@
       </q-card>
     </q-dialog>
 
+
     <q-dialog v-model="dialog" :persistent="false">
       <q-card style="min-width: 500px; max-width: 90vw">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6">Agregar Producto</div>
-          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
@@ -278,12 +296,6 @@
             </q-select>
 
             <div class="q-mt-sm">
-              <label class="text-subtitle2 text-primary q-mb-sm">Seleccionar Imagen de Marca (opcional):</label>
-              <q-file outlined dense v-model="marcaImageFileAdd" label="Imagen de la Marca" accept="image/*">
-                <template v-slot:prepend>
-                  <q-icon name="attach_file" />
-                </template>
-              </q-file>
               <div v-if="marcaImagePreviewAdd" class="q-mt-sm flex flex-center">
                 <img :src="marcaImagePreviewAdd" alt="Marca Preview"
                   style="max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 8px;" />
@@ -345,10 +357,9 @@
     </q-dialog>
 
     <q-dialog v-model="addMarcaDialog" :persistent="false">
-      <q-card style="min-width: 350px;">
+      <q-card style="min-width: 600px; max-width: 90vw;">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6">Agregar Nueva Marca</div>
-          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -372,11 +383,11 @@
       </q-card>
     </q-dialog>
 
+
     <q-dialog v-model="addTipoDialog" :persistent="false">
-      <q-card style="min-width: 350px;">
+      <q-card style="min-width: 600px;">
         <q-card-section class="row items-center justify-between">
           <div class="text-h6">Agregar Nuevo Tipo</div>
-          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section class="q-pt-none">
@@ -400,7 +411,6 @@
         <q-card-section class="q-pt-none">
           <div v-if="offerToEdit">
             <div class="text-subtitle1 q-mb-sm">Producto: <strong>{{ offerToEdit.nombre }}</strong></div>
-            <div class="text-body2">Precio Original: {{ formatCurrency(offerToEdit.price) }}</div>
             <q-input outlined dense v-model="offerPercentage" label="Porcentaje de Descuento (%)" type="number" min="1"
               max="100" required class="q-mt-md" />
             <q-input outlined dense v-model="offerExpirationDate" label="Fecha de Vencimiento" type="date" required
@@ -426,6 +436,8 @@
 import { ref, onMounted, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
 import { postData, getData, putData, deleteData } from '../Services/jook.js';
+import { formatNumberWithThousandsSeparator, getPrecioInfo } from '../utils/utils.js';
+
 
 const $q = useQuasar();
 
@@ -501,16 +513,36 @@ const offerExpirationDate = ref(null); // Fecha de vencimiento de la oferta
 const columnas = [ // Definición de las columnas de la tabla Quasar
   { name: 'imagen', label: 'Imagen', field: 'images', align: 'center' },
   { name: 'marca', label: 'Marca', field: 'marca', align: 'left', sortable: true },
-  { name: 'categoryId', label: 'Categoría', field: 'categoryId', align: 'center', sortable: true , format: val => val?.name},
+  { name: 'categoryId', label: 'Categoría', field: 'categoryId', align: 'center', sortable: true, format: val => val?.name },
   { name: 'tipo', label: 'Tipo', field: 'tipo', align: 'left', sortable: true, format: val => val?.nombre || 'N/A' }, // Asegura que muestre el nombre del tipo
   { name: 'nombre', label: 'Nombre', field: 'nombre', align: 'left', sortable: true },
   { name: 'descripcion', label: 'Descripción', field: 'descripcion', align: 'center' },
-  { name: 'precio', label: 'Precio Original', field: 'price', align: 'right', sortable: true },
   { name: 'oferta', label: 'Oferta', align: 'center' }, // Nueva columna para mostrar el estado de la oferta
   { name: 'precioFinal', label: 'Precio Final', align: 'right', sortable: true }, // Nueva columna para el precio final
   { name: 'stock', label: 'Stock', field: 'stock', align: 'right', sortable: true },
   { name: 'acciones', label: 'Acciones', field: 'acciones', align: 'center' }
 ];
+
+
+function openEditDialog(row) {
+  productToEdit.value = {
+    ...row,
+    marca: row.marca?._id || null,
+    tipo: row.tipo?._id || null,
+    categoryId: row.categoryId?._id || null
+  }
+
+  editImages.value = []
+  editImagePreviews.value = [...row.images] || []
+
+  marcaImageFileEdit.value = null
+  marcaImagePreviewEdit.value = row.marca?.imagen || null
+
+  editDialog.value = true
+}
+
+
+
 
 // --- Propiedades computadas para la lógica de la UI ---
 
@@ -855,11 +887,11 @@ const handleSingleFileChange = (event, index) => {
       imagePreviews.value.push(null);
       imageNames.value.push(null);
     }
-    
+
     images.value[index] = file;
     imagePreviews.value[index] = URL.createObjectURL(file);
     imageNames.value[index] = file.name;
-    
+
     console.log('Archivo agregado en índice', index, ':', file.name); // Para debugging
   } else {
     if (images.value[index]) {
@@ -868,7 +900,7 @@ const handleSingleFileChange = (event, index) => {
       imageNames.value[index] = null;
     }
   }
-  
+
   // NO eliminar elementos aquí para mantener los índices
   // Solo limpiar al final cuando se envíe el formulario
   console.log('Estado actual de images:', images.value); // Para debugging
@@ -919,15 +951,16 @@ const fetchProductos = async () => {
   try {
     const data = await getData('/producto');
     productos.value = data.map(p => {
-      const category = categories.value.find(c => c.value === p.tipo?._id); // Usamos p.tipo?._id para seguridad
+      const category = categories.value.find(c => c.value === p.tipo?._id); // Seguridad con ?
 
       return {
         ...p,
         categoriaNombre: category ? category.label : 'Desconocida',
-        hasActiveOffer: p.offer && new Date(p.offer.expirationDate) > new Date(),
+        hasActiveOffer: p.oferta && p.oferta.activa && new Date(p.oferta.fechaFin) > new Date(),
       };
     });
-    console.log("Productos con nombres de categoría asignados:", productos.value); // Para verificar
+
+    console.log("Productos con nombres de categoría asignados:", productos.value); // Verifica
   } catch (error) {
     console.error('Error al obtener productos:', error);
     $q.notify({ type: 'negative', message: 'Error al cargar los productos.' });
@@ -935,6 +968,7 @@ const fetchProductos = async () => {
     loadingTable.value = false;
   }
 };
+
 // Carga todas las marcas
 const fetchMarcas = async () => {
   try {
@@ -977,7 +1011,7 @@ const fetchCategories = async () => {
       label: cat.name,
       value: cat._id
     }));
-     console.log("Categorías mapeadas para uso interno:", categories.value); // ¡Verifica esto en la consola!
+    console.log("Categorías mapeadas para uso interno:", categories.value); // ¡Verifica esto en la consola!
   } catch (error) {
     console.error('Error al obtener categorías:', error);
     $q.notify({ type: 'negative', message: 'Error al cargar las categorías.' });
@@ -1009,9 +1043,9 @@ const handleAddProduct = async () => {
 
     // ✅ CAMBIO PRINCIPAL: Filtrar archivos nulos ANTES del forEach
     const validImages = images.value.filter(file => file !== null && file !== undefined);
-    
+
     console.log('Imágenes válidas a enviar:', validImages); // Para debugging
-    
+
     validImages.forEach((file) => {
       formData.append('images', file);
     });
@@ -1031,7 +1065,7 @@ const handleAddProduct = async () => {
     if (newProduct) {
       $q.notify({ type: 'positive', message: 'Producto agregado exitosamente.' });
       dialog.value = false;
-      
+
       // Resetear formulario inline para evitar el error
       productName.value = '';
       productDescription.value = '';
@@ -1040,20 +1074,20 @@ const handleAddProduct = async () => {
       categoryId.value = '';
       productMarca.value = null;
       productTipo.value = null;
-      
+
       // Limpiar URLs de objeto para liberar memoria
       imagePreviews.value.forEach(url => {
         if (url && url.startsWith('blob:')) {
           URL.revokeObjectURL(url);
         }
       });
-      
+
       images.value = [];
       imagePreviews.value = [];
       imageNames.value = [];
       marcaImageFileAdd.value = null;
       marcaImagePreviewAdd.value = null;
-      
+
       await fetchProductos();
     } else {
       $q.notify({ type: 'negative', message: 'Error al agregar el producto.' });
@@ -1082,9 +1116,10 @@ const handleEditProduct = async () => {
     formData.append('descripcion', productToEdit.value.descripcion);
     formData.append('price', productToEdit.value.price);
     formData.append('stock', productToEdit.value.stock);
-    formData.append('categoryId', productToEdit.value.categoryId);
-    formData.append('marca', productToEdit.value.marca); // Envía el _id
-    formData.append('tipo', productToEdit.value.tipo); // Envía el _id
+    formData.append('categoryId', productToEdit.value.categoryId._id || productToEdit.value.categoryId);
+    formData.append('marca', productToEdit.value.marca._id || productToEdit.value.marca);
+    formData.append('tipo', productToEdit.value.tipo._id || productToEdit.value.tipo);
+
 
     // Añadir nuevas imágenes
     editImages.value.forEach((file, index) => {
@@ -1116,7 +1151,7 @@ const handleEditProduct = async () => {
     }
 
 
-    const updatedProduct = await putData(`/productos/id/${productToEdit.value._id}`, formData, true); // `true` indica FormData
+    const updatedProduct = await putData(`/producto/id/${productToEdit.value._id}`, formData, true); // `true` indica FormData
 
     if (updatedProduct) {
       $q.notify({ type: 'positive', message: 'Producto actualizado exitosamente.' });
@@ -1191,15 +1226,19 @@ const handleActivarOferta = async () => {
   loading.value = true;
   try {
     const payload = {
-      percentage: offerPercentage.value,
-      expirationDate: offerExpirationDate.value,
+      porcentaje: Number(offerPercentage.value),
+      fechaFin: offerExpirationDate.value,
+      // puedes incluir fechaInicio: new Date() si quieres personalizarlo
     };
+
     const response = await postData(`/producto/id/${offerToEdit.value._id}/oferta`, payload);
+    console.log(response); // Verifica que response.producto.oferta existe
+
 
     if (response) {
       $q.notify({ type: 'positive', message: 'Oferta activada/actualizada exitosamente.' });
       ofertaDialog.value = false;
-      await fetchProductos(); // Recargar la tabla para mostrar los cambios
+      await fetchProductos();
     } else {
       $q.notify({ type: 'negative', message: 'Error al activar/actualizar la oferta.' });
     }
@@ -1210,6 +1249,7 @@ const handleActivarOferta = async () => {
     loading.value = false;
   }
 };
+
 
 // Confirma y desactiva una oferta
 const confirmDesactivarOferta = (product) => {
@@ -1252,13 +1292,15 @@ const toggleOfertasFilter = () => {
 
 // Formatea un número como moneda
 const formatCurrency = (value) => {
+  const number = typeof value === 'number' ? value : Number(value);
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
-    currency: 'COP', // Moneda de Colombia
-    minimumFractionDigits: 0, // No mostrar decimales para valores enteros
-    maximumFractionDigits: 0 // No mostrar decimales para valores enteros
-  }).format(value);
+    currency: 'COP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(number);
 };
+
 
 // Calcula el precio final con el descuento de oferta
 const calculateFinalPrice = (product) => {
@@ -1307,5 +1349,120 @@ h2 {
 button {
   width: 100%;
   margin-top: 1rem;
+}
+
+
+.bg-white {
+  background-color: #ffffff;
+}
+
+/* Estilos generales para la tabla de productos, manteniendo la paleta café */
+.my-product-table {
+  background-color: #fcf8f5;
+  /* Un tono crema muy claro */
+  border-radius: 8px;
+  /* Bordes ligeramente redondeados para la tabla */
+  /* Asegura que ocupe todo el ancho disponible si es necesario, o ajústalo */
+  width: 100%;
+}
+
+/* Color para el encabezado de la tabla */
+.my-product-table thead tr:first-child {
+  background-color: #a1887f;
+  /* Café oscuro */
+  color: white;
+  /* Texto blanco en el encabezado */
+}
+
+/* Filas impares con un color diferente para mejorar la legibilidad */
+.my-product-table tbody tr:nth-child(odd) {
+  background-color: #f7f2ed;
+  /* Un café aún más claro para filas alternas */
+}
+
+/* Efecto hover en las filas */
+.my-product-table tbody tr:hover {
+  background-color: #e6dcd4;
+  /* Un café claro distintivo al pasar el mouse */
+  cursor: pointer;
+  /* Indicar que la fila es interactiva */
+}
+
+/* Estilos de texto para las celdas */
+.text-brown-9 {
+  color: #3e2723;
+  /* Café muy oscuro para los nombres y encabezados */
+}
+
+.text-brown-8 {
+  color: #5d4037;
+  /* Un café un poco más claro para otros textos */
+}
+
+/* Clases para los encabezados de las columnas */
+.bg-brown-2 {
+  background-color: #d7ccc8 !important;
+  /* Un tono café claro para los encabezados */
+  color: #3e2723 !important;
+  /* Texto oscuro para contrastar */
+}
+
+/* Estilo para los botones dentro de la tabla */
+.table-btn {
+  transition: background-color 0.3s ease;
+}
+
+.table-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+  /* Un ligero sombreado al pasar el mouse */
+}
+
+/* Fondo blanco para la página (asegúrate de que este estilo esté en tu <q-page> o sea global) */
+.bg-white {
+  background-color: #ffffff;
+}
+
+/* Estilos para la q-card del panel de control */
+.control-panel-card {
+  background-color: #f7f2ed; /* Un café muy claro para el fondo del panel */
+  border-color: #d7ccc8; /* Un borde sutil que combine */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); /* Sombra suave para darle profundidad */
+}
+
+/* Estilos para los botones de acción */
+.action-btn {
+  /* Quasar ya maneja los colores como brown-7, deep-orange-7, green-8, purple-8. */
+  /* Si quieres personalizar más allá de los colores de Quasar, puedes añadirlo aquí. */
+  font-weight: 500;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px); /* Pequeño efecto de elevación al pasar el mouse */
+}
+
+/* Estilos para los q-input y q-select (filtros) */
+.custom-input .q-field__control {
+  border-color: #a1887f !important; /* Borde de un café más oscuro */
+  background-color: #fffaf7; /* Fondo ligeramente crema dentro del input/select */
+}
+
+.custom-input .q-field__label {
+  color: #5d4037; /* Color café para el label */
+}
+
+.custom-input .q-field__native,
+.custom-input .q-field__input {
+  color: #3e2723; /* Color café oscuro para el texto de entrada */
+}
+
+.custom-input .q-icon {
+  color: #5d4037; /* Color café para los íconos de búsqueda/flecha */
+}
+
+/* Ajustes específicos para el q-select con imágenes en opciones */
+.q-item-section img {
+  border-radius: 4px; /* Bordes redondeados para las imágenes de marca en las opciones */
 }
 </style>

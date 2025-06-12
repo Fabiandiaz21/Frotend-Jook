@@ -1,6 +1,60 @@
 <template>
   <div class="page-container">
-    <!-- Featured Tech Slider (Full Width) -->
+    <q-dialog v-model="showWelcomeModal" persistent>
+      <q-card class="bg-brown-1 text-brown-10" style="width: 700px; max-width: 80vw;">
+        <q-card-section>
+          <div class="text-h3 text-center text-weight-bold q-mb-md">¡Bienvenido a Jook!</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <p class="text-h6 q-mb-md">
+            Estamos emocionados de tenerte aquí en Jook, tu destino definitivo para la tecnología.
+            Explora nuestro marketplace donde encontrarás:
+          </p>
+          <q-list bordered separator class="rounded-borders">
+            <q-item>
+              <q-item-section avatar>
+                <q-icon name="check_circle" color="brown-8" size="md" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-h6">
+                  Una amplia variedad de productos tecnológicos de vanguardia.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item>
+              <q-item-section avatar>
+                <q-icon name="local_offer" color="brown-8" size="md" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-h6">
+                  Las mejores ofertas y precios competitivos.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+            <q-item>
+              <q-item-section avatar>
+                <q-icon name="security" color="brown-8" size="md" />
+              </q-item-section>
+              <q-item-section>
+                <q-item-label class="text-h6">
+                  Compras seguras y soporte confiable.
+                </q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+          <p class="text-h6 q-mt-md">
+            ¡Prepárate para descubrir lo último en gadgets, electrónica y mucho más!
+          </p>
+        </q-card-section>
+
+        <q-card-actions align="center" class="bg-brown-2">
+          <q-btn label="¡Empezar a Explorar!" color="brown-8" @click="showWelcomeModal = false"
+            class="q-px-lg q-py-sm text-h6" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
     <div class="full-width-slider">
       <q-carousel v-model="featuredSlide" animated infinite autoplay arrows control-color="brown-6" height="500px"
         class="full-width-carousel">
@@ -17,7 +71,6 @@
       </q-carousel>
     </div>
 
-    <!-- Services Cards -->
     <div class="row q-ma-xl q-gutter-xl justify-center">
       <q-card class="service-card bg-brown-1">
         <q-card-section class="text-center">
@@ -27,9 +80,9 @@
         </q-card-section>
       </q-card>
 
-         <q-card class="service-card bg-brown-1" @click="router.push('/productos')" style="cursor:pointer;">
+      <q-card class="service-card bg-brown-1" @click="router.push('/productos')" style="cursor:pointer;">
         <q-card-section class="text-center">
-          <q-icon name="library_books" size="xl" color="brown-8" class="service-icon"/>
+          <q-icon name="library_books" size="xl" color="brown-8" class="service-icon" />
           <div class="text-h4 q-mt-md text-brown-10">Catálogo Completo </div>
           <p class="text-h6 text-brown-9 q-mt-sm">Explora todos nuestros productos tecnológicos</p>
         </q-card-section>
@@ -45,7 +98,6 @@
 
     </div>
 
-    <!-- Categories Carousel -->
     <q-card flat class="q-ma-xl">
       <q-card-section>
         <div class="text-h3 q-pb-xl text-center text-weight-bold text-brown-8">Explora por Categorías</div>
@@ -73,7 +125,6 @@
       </q-carousel>
     </q-card>
 
-    <!-- Brands Carousel -->
     <q-card flat class="q-ma-xl">
       <q-card-section>
         <div class="text-h3 q-pb-xl text-center text-weight-bold text-brown-8">Nuestras Marcas</div>
@@ -98,7 +149,6 @@
       </q-carousel>
     </q-card>
 
-    <!-- Compact Full-Width Footer -->
     <footer class="compact-full-width-footer bg-brown-9">
       <div class="footer-content">
         <div class="footer-section">
@@ -173,6 +223,9 @@ const props = defineProps({
 // --- Common Setup ---
 const router = useRouter();
 const $q = useQuasar();
+
+// --- Modal de Bienvenida ---
+const showWelcomeModal = ref(false); // Estado para controlar la visibilidad del modal
 
 // Computed properties for responsive items per page
 const responsiveCategoriesPerPage = computed(() => {
@@ -277,7 +330,6 @@ const brandChunks = computed(() => {
   return chunks;
 });
 
-// ...
 const fetchBrands = async () => {
   try {
     const response = await getData('/marca');
@@ -285,10 +337,9 @@ const fetchBrands = async () => {
       brands.value = response
         .filter(brand => brand !== null && brand !== undefined)
         .map(brand => ({
-          // Asegúrate de incluir el _id (o el campo que represente el ID único)
-          _id: brand._id, // Asumiendo que tu API devuelve _id para marcas
+          _id: brand._id,
           name: brand.nombre,
-          image: brand.image || 'https://cdn.quasar.dev/img/material.png'
+          image: brand.imagen || 'https://cdn.quasar.dev/img/material.png'
         }));
 
       console.log('Marcas procesadas para el carrusel:', brands.value);
@@ -301,7 +352,6 @@ const fetchBrands = async () => {
     $q.notify({ type: 'negative', message: 'Error al cargar marcas para el carrusel' });
   }
 };
-// ...
 
 const selectBrand = (brand) => {
   if (brand && brand._id) {
@@ -331,6 +381,7 @@ onMounted(() => {
   fetchBrands();
   startCategoryAutoplay();
   startBrandAutoplay();
+  showWelcomeModal.value = true; // Mostrar el modal al montar el componente
 });
 
 onUnmounted(() => {
@@ -829,6 +880,42 @@ onUnmounted(() => {
   .brand-card {
     width: 130px;
     height: 130px;
+  }
+}
+
+/* Estilos para las tarjetas de marca */
+.brand-card {
+  width: 200px; /* Ancho fijo para cada tarjeta de marca */
+  height: 200px; /* Alto fijo para cada tarjeta de marca, crea una forma cuadrada */
+  display: flex; /* Usamos flexbox para centrar el contenido */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden; /* Oculta cualquier parte de la imagen que se desborde */
+}
+
+/* Estilos para la imagen dentro de la tarjeta de marca */
+.brand-img {
+  width: 100%; /* La imagen ocupará el 100% del ancho de su contenedor (.brand-card) */
+  height: 100%; /* La imagen ocupará el 100% del alto de su contenedor (.brand-card) */
+  object-fit: contain; /* Ajusta la imagen completa dentro del espacio, añadiendo barras si es necesario */
+  /* Si prefieres que la imagen siempre llene el espacio, incluso si se recorta un poco, usa 'cover' en lugar de 'contain' */
+  /* object-fit: cover; */
+}
+
+/* Opcional: Ajustes para el nombre de la marca si no se ve bien en la parte inferior */
+.brand-name {
+  background-color: rgba(0, 0, 0, 0.6); /* Fondo semi-transparente para mejorar la legibilidad del texto */
+  padding: 4px 8px; /* Un poco de padding */
+  width: 100%; /* Asegura que el fondo cubra todo el ancho inferior */
+  box-sizing: border-box; /* Incluye padding en el ancho total */
+}
+
+/* Ajustes para la responsividad de las tarjetas de marca en pantallas pequeñas */
+@media (max-width: 767px) {
+  .brand-card {
+    width: 150px; /* Reduce el tamaño en móviles */
+    height: 150px;
   }
 }
 </style>

@@ -1,9 +1,11 @@
 import { createApp } from 'vue'
-import { Quasar,Notify, Dialog } from 'quasar'
-import {router} from "./Routes/Routes"
+import { Quasar, Notify, Dialog } from 'quasar'
+import { router } from "./Routes/Routes"
 import { createPinia } from 'pinia'
 import piniaPluginPersistedstate from "pinia-plugin-persistedstate"
 
+// ✅ Importa Tailwind CSS
+import './assets/main.css'
 
 // Import icon libraries
 import '@quasar/extras/material-icons/material-icons.css'
@@ -18,22 +20,21 @@ import '@quasar/extras/eva-icons/eva-icons.css'
 // Import Quasar css
 import 'quasar/src/css/index.sass'
 
-// Assumes your root component is App.vue
-// and placed in same folder as main.js
+// Componente raíz
 import App from './App.vue'
 
 const myApp = createApp(App)
 const pinia = createPinia()
 
-
 pinia.use(piniaPluginPersistedstate)
+
 myApp.use(pinia)
-myApp.use(router) 
+myApp.use(router)
 myApp.use(Quasar, {
   plugins: {
-    Notify, 
+    Notify,
     Dialog
-  },
-});
+  }
+})
 
 myApp.mount('#app')
