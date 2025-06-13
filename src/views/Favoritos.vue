@@ -55,7 +55,7 @@
                   <div class="col-6">
                     <q-item-label class="text-caption text-brown-7">
                       <q-icon name="category" size="sm" />
-                      Tipo: {{ producto.tipo }}
+                      Tipo: {{ getNombreTipos(producto.tipo) }}
                     </q-item-label>
                   </div>
                 </div>
@@ -111,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { cargarFavoritos } from "../utils/utils";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../Store/useAunt";
@@ -121,8 +121,9 @@ import axios from "axios";
 const $q = useQuasar();
 const authStore = useAuthStore();
 const router = useRouter();
-const favoritos = authStore.favorites;
+const favoritos = computed(() => authStore.favorites);
 const marcas = ref([]);
+const tipos = ref([]);
 
 const verDetalle = (id) => {
   router.push(`/vistap/${id}`);
@@ -131,19 +132,29 @@ const verDetalle = (id) => {
 const removeFromFavorites = (productId) => {
   $q.dialog({
     title: "Eliminar de favoritos",
-    message:
-      "¿Estás seguro de que quieres eliminar este producto de tus favoritos?",
+    message: "¿Estás seguro de que quieres eliminar este producto de tus favoritos?",
     cancel: true,
     persistent: true,
     color: "brown-8",
-  }).onOk(() => {
-    authStore.removeFromFavorites(productId);
-    $q.notify({
-      message: "Producto eliminado de favoritos",
-      color: "brown-6",
-      icon: "check",
-      position: "top",
-    });
+  }).onOk(async () => {
+    try {
+      // Llama a tu endpoint toggleFavorito
+      await axios.put(`http://localhost:3200/api/usuarios/favoritos/${productId}`);
+      authStore.removeFromFavorites(productId); // Actualiza el store local
+      $q.notify({
+        message: "Producto eliminado de favoritos",
+        color: "brown-6",
+        icon: "check",
+        position: "top",
+      });
+    } catch (error) {
+      $q.notify({
+        message: "No se pudo eliminar en el servidor",
+        color: "red-6",
+        icon: "error",
+        position: "top",
+      });
+    }
   });
 };
 
@@ -166,9 +177,30 @@ const getNombreMarca = (id) => {
   return marca ? marca.nombre : "Sin marca";
 };
 
+const cargarTipos = async () => {
+  try {
+    const res = await axios.get("http://localhost:3200/api/marca"); // Ajusta la URL a tu backend
+    tipos.value = res.data;
+  } catch (error) {
+    $q.notify({
+      message: "No se pudieron cargar las marcas",
+      color: "red-6",
+      icon: "error",
+      position: "top",
+    });
+  }
+};
+
+const getNombreTipos = (id) => {
+  const tipo = tipos.value.find((m) => m._id === id);
+  return tipo ? tipo.nombre : "Sin marca";
+};
+
 onMounted(() => {
   cargarFavoritos();
   cargarMarcas();
+  cargarTipos();
+  getNombreTipos();
 });
 </script>
 

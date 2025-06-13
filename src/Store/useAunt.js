@@ -37,6 +37,10 @@ export const useAuthStore = defineStore('auth', () => {
     return !!token.value;
   };
 
+  const removeFromFavorites = (id) => {
+  favorites.value = favorites.value.filter(p => p._id !== id);
+};
+
   return {
     token,
     user,
@@ -48,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
     setUserRole,
     clearAuth,
     isLoggedIn,
+    removeFromFavorites
   };
 }, {
   persist: {
