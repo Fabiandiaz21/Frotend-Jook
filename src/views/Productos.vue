@@ -12,9 +12,17 @@
     <div class="filter-section">
       <div class="filter-container">
         <div v-for="filterGroup in filterOptions" :key="filterGroup.label" class="filter-group">
-          <q-select outlined :label="filterGroup.label" v-model="selectedFilters[filterGroup.label]"
-            :options="filterGroup.options" option-label="name" option-value="_id" color="brown-7" class="filter-select"
-            dense>
+          <q-select
+            outlined
+            :label="filterGroup.label"
+            v-model="selectedFilters[filterGroup.label]"
+            :options="filterGroup.options"
+            option-label="name"
+            option-value="_id"
+            color="brown-7"
+            class="filter-select"
+            dense
+          >
             <template v-slot:option="scope">
               <q-item v-bind="scope.itemProps">
                 <q-item-section>
@@ -24,7 +32,13 @@
             </template>
           </q-select>
         </div>
-        <q-btn label="Aplicar Filtros" color="brown-7" unelevated @click="applyFilters" class="apply-btn" />
+        <q-btn 
+          label="Aplicar Filtros" 
+          color="brown-7" 
+          unelevated 
+          @click="applyFilters"
+          class="apply-btn"
+        />
       </div>
     </div>
 
@@ -37,10 +51,18 @@
     </div>
 
     <div class="products-grid">
-      <q-card v-for="product in products" :key="product._id" class="product-card">
+      <q-card 
+        v-for="product in products" 
+        :key="product._id" 
+        class="product-card"
+      >
         <router-link :to="`/vistap/${product._id}`">
-          <q-img :src="product.images?.[0] || 'https://via.placeholder.com/300'" :ratio="1" class="product-img"
-            spinner-color="brown-6">
+          <q-img
+            :src="product.images?.[0] || 'https://via.placeholder.com/300'"
+            :ratio="1"
+            class="product-img"
+            spinner-color="brown-6"
+          >
             <template v-slot:error>
               <div class="absolute-full flex flex-center bg-brown-1 text-brown-8">
                 Imagen no disponible
@@ -52,23 +74,18 @@
         <q-card-section>
           <div class="product-title">{{ product.nombre }}</div>
           <div class="product-brand">{{ product.marca.nombre }}</div>
-
+          
           <div class="row items-center justify-between q-mt-sm">
             <div class="product-price text-brown-8">
-              <template v-if="getPrecioInfo(product).tieneOferta">
-                <span class="text-negative text-bold">
-                  ${{ formatNumberWithThousandsSeparator(getPrecioInfo(product).precioFinal) }}
-                </span>
-                <span class="text-grey-5 text-strike q-ml-sm">
-                  ${{ formatNumberWithThousandsSeparator(getPrecioInfo(product).precioOriginal) }}
-                </span>
-              </template>
-              <template v-else>
-                ${{ formatNumberWithThousandsSeparator(getPrecioInfo(product).precioFinal) }}
-              </template>
+              ${{ formatNumberWithThousandsSeparator(product.price) }}
             </div>
-
-            <q-btn round flat color="brown-6" icon="shopping_cart" @click.stop="addToCart(product)" />
+            <q-btn 
+              round 
+              flat 
+              color="brown-6" 
+              icon="shopping_cart" 
+              @click.stop="addToCart(product)"
+            />
           </div>
         </q-card-section>
       </q-card>
@@ -79,7 +96,12 @@
       <q-icon name="search_off" size="xl" color="brown-4" />
       <h3>No encontramos productos</h3>
       <p>Intenta con otros filtros de búsqueda</p>
-      <q-btn label="Limpiar Filtros" color="brown-7" outline @click="clearFilters" />
+      <q-btn 
+        label="Limpiar Filtros" 
+        color="brown-7" 
+        outline 
+        @click="clearFilters"
+      />
     </div>
   </div>
 </template>
@@ -87,9 +109,8 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { getData } from '../Services/jook.js';
-import { formatNumberWithThousandsSeparator, getPrecioInfo } from '../utils/utils.js';
+import { formatNumberWithThousandsSeparator } from '../utils/utils.js';
 import { useCartStore } from '../Store/useCartStore';
-
 
 const cartStore = useCartStore();
 
@@ -169,7 +190,7 @@ const loadFilterOptions = async () => {
   try {
     const [categorias, marcas, tiposDeUso] = await Promise.all([
       getData('/categoria'),
-      getData('/producto/marcas'),
+      getData('/producto/marcas'),  
       getData('/producto/tipos-de-uso')
     ]);
 
@@ -200,8 +221,8 @@ onMounted(() => {
 
 .hero-section {
   height: 300px;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)),
-    url('https://img.freepik.com/foto-gratis/arreglo-coleccion-estacionaria-moderna_23-2149309649.jpg?semt=ais_items_boosted&w=740');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), 
+                  url('https://img.freepik.com/foto-gratis/arreglo-coleccion-estacionaria-moderna_23-2149309649.jpg?semt=ais_items_boosted&w=740');
   background-size: cover;
   background-position: center;
   display: flex;
@@ -387,32 +408,32 @@ onMounted(() => {
   .hero-content h1 {
     font-size: 2rem;
   }
-
+  
   .hero-content p {
     font-size: 1rem;
   }
-
+  
   .slide-content {
     flex-direction: column;
     padding: 10px;
   }
-
+  
   .featured-img {
     width: 150px;
     height: 150px;
     margin-right: 0;
     margin-bottom: 15px;
   }
-
+  
   .featured-info h3 {
     font-size: 1.2rem;
     text-align: center;
   }
-
+  
   .price-container {
     text-align: center;
   }
-
+  
   .products-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 15px;
@@ -423,11 +444,11 @@ onMounted(() => {
   .filter-container {
     flex-direction: column;
   }
-
+  
   .filter-group {
     width: 100%;
   }
-
+  
   .products-grid {
     grid-template-columns: 1fr;
   }
