@@ -5,8 +5,9 @@
         <q-btn flat round dense icon="menu" @click="toggleLeftDrawer" class="lt-sm q-mr-sm" />
 
         <q-toolbar-title class="flex items-center" id="titulo" style="min-width: 150px; color: white">
-             <q-avatar size="55px" class="bg-yellow-8 text-white" style="margin-top: 15px;">
-            <img src = "https://res.cloudinary.com/dvqn0avdc/image/upload/v1749428022/WhatsApp_Image_2025-06-08_at_6.37.31_PM_iyksbv.jpg">
+          <q-avatar size="55px" class="bg-yellow-8 text-white" style="margin-top: 15px;">
+            <img
+              src="https://res.cloudinary.com/dvqn0avdc/image/upload/v1749428022/WhatsApp_Image_2025-06-08_at_6.37.31_PM_iyksbv.jpg">
           </q-avatar>
           <span class="q-ml-sm text-weight-bold">Jook</span>
         </q-toolbar-title>
@@ -77,6 +78,11 @@
                 <q-item clickable v-close-popup @click="goToProfile">
                   <q-item-section>
                     <q-item-label>Mi cuenta</q-item-label>
+                  </q-item-section>
+                </q-item>
+                <q-item v-if="hasAdminAccess" clickable v-close-popup @click="goToAdmin">
+                  <q-item-section>
+                    <q-item-label>Panel de Administración</q-item-label>
                   </q-item-section>
                 </q-item>
                 <q-item clickable v-close-popup @click="showLogoutModal = true">
@@ -184,7 +190,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import { useRouter, useRoute } from "vue-router"; // Importa useRoute
+import { useRouter, useRoute } from "vue-router";
 import { useQuasar } from "quasar";
 import { getData } from "../services/jook";
 import { useAuthStore } from "../Store/useAunt";
@@ -194,13 +200,17 @@ const searchQuery = ref("");
 const categories = ref([]);
 const productsByCategory = ref([]);
 const router = useRouter();
-const route = useRoute(); // Instancia useRoute
+const route = useRoute();
 const $q = useQuasar();
 const searchResults = ref([]);
 import { useCartStore } from "../Store/useCartStore";
 const cartStore = useCartStore();
 const authStore = useAuthStore();
 const isLoggedIn = computed(() => authStore.isLoggedIn());
+
+const hasAdminAccess = computed(() => {
+  return authStore.userRole === 'admin';
+});
 
 const sortedSearchResults = computed(() => {
   return [...searchResults.value].sort((a, b) => {
@@ -209,7 +219,6 @@ const sortedSearchResults = computed(() => {
   });
 });
 
-// Estado para controlar la apertura/cierre del q-drawer
 const leftDrawerOpen = ref(false);
 const toggleLeftDrawer = () => {
   leftDrawerOpen.value = !leftDrawerOpen.value;
@@ -225,20 +234,17 @@ const handleSearch = async (newValue) => {
         const { productos, sugerenciasMarca, sugerenciasCategoria } = response;
 
         searchResults.value = [
-          // Productos
           ...productos.map((p) => ({
             ...p,
             tipoResultado: "producto",
           })),
 
-          // Marcas sugeridas (como strings)
           ...sugerenciasMarca.map((m) => ({
             _id: m._id,
             nombre: m.nombre,
             tipoResultado: "marca",
           })),
 
-          // Categorías sugeridas (con name y _id)
           ...sugerenciasCategoria.map((c) => ({
             ...c,
             tipoResultado: "categoria",
@@ -285,7 +291,7 @@ const logout = () => {
   });
 
   authStore.clearAuth();
-  cartStore.clearCart(); // <-- Limpia el carrito al cerrar sesión
+  cartStore.clearCart();
 
   setTimeout(() => {
     router.push("/");
@@ -294,6 +300,11 @@ const logout = () => {
 
 const goToProfile = () => {
   router.push("/perfil");
+};
+
+// Nueva función para ir a la administración
+const goToAdmin = () => {
+  router.push("/agregar"); // Asegúrate de que esta sea la ruta correcta a tu panel de administración
 };
 
 const fetchCategories = async () => {
@@ -323,7 +334,6 @@ const selectCategory = (category) => {
 onMounted(() => {
   fetchCategories();
   cargarFavoritos();
-  // Verificar si hay un parámetro de búsqueda en la URL al cargar el componente
   if (route.query.search) {
     searchQuery.value = route.query.search;
     handleSearch(route.query.search);

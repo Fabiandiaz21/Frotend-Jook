@@ -1,33 +1,45 @@
 <template>
   <div class="q-pa-md bg-white">
-    <q-table title="Categorías" :rows="categories" :columns="columns" row-key="name" flat bordered
-      class="my-category-table shadow-3 rounded-borders">
+    <q-table title="Categorías" :rows="categories" :columns="columns" row-key="_id" flat bordered
+      class="my-category-table shadow-3 rounded-borders full-width no-horizontal-scroll">
+      <!-- imagen -->
+      <template v-slot:body-cell-image="props">
+        <q-td align="center" style="width: 60px;">
+          <q-img v-if="props.row.image" :src="props.row.image" spinner-color="white"
+            style="height: 50px; max-width: 50px; border-radius: 4px;" fit="contain" />
+          <q-icon v-else name="image_not_supported" size="md" color="grey" />
+        </q-td>
+      </template>
+
+      <!-- acciones -->
       <template v-slot:body-cell-acciones="props">
-        <q-td align="center">
+        <q-td align="center" style="width: 150px;">
           <div class="row no-wrap justify-center q-gutter-xs">
-            <q-btn icon="edit" color="brown-7" dense size="sm" flat @click="openEditDialog(props.row)"
-              class="q-px-xs table-btn">
+            <q-btn icon="edit" color="brown-7" dense size="sm" flat @click="openEditDialog(props.row)">
               <q-tooltip>Editar Categoría</q-tooltip>
             </q-btn>
             <q-btn :icon="props.row.estado === 'activo' ? 'cancel' : 'check'"
               :color="props.row.estado === 'activo' ? 'red-6' : 'green-6'" dense size="sm" flat
-              @click="cambiarEstado(props.row)" class="q-px-xs table-btn">
+              @click="cambiarEstado(props.row)">
               <q-tooltip>{{ props.row.estado === 'activo' ? 'Desactivar' : 'Activar' }}</q-tooltip>
+            </q-btn>
+            <q-btn icon="delete" color="negative" dense size="sm" flat @click="deleteCategory(props.row)">
+              <q-tooltip>Eliminar Categoría</q-tooltip>
             </q-btn>
           </div>
         </q-td>
       </template>
 
+      <!-- sin datos -->
       <template v-slot:no-data="{ icon, message, filter }">
         <div class="full-width row flex-center text-brown-7 q-gutter-sm">
           <q-icon size="2em" :name="icon" />
-          <span>
-            {{ message }}
-          </span>
+          <span>{{ message }}</span>
           <q-icon size="2em" :name="filter ? 'filter_list' : 'search'" />
         </div>
       </template>
     </q-table>
+
 
     <q-btn fab icon="add" color="brown-7" class="q-fab-bottom-right q-ma-md" @click="openAddDialog">
       <q-tooltip>Agregar Nueva Categoría</q-tooltip>
@@ -41,8 +53,26 @@
 
         <q-card-section class="q-pa-md">
           <q-input v-model="form.name" label="Nombre" dense outlined class="q-mb-md custom-input" />
-          <q-input v-model="form.description" label="Descripción" type="textarea" dense outlined class="custom-input"
-            rows="3" />
+          <q-input v-model="form.description" label="Descripción" type="textarea" dense outlined
+            class="q-mb-md custom-input" rows="3" />
+
+          <q-file v-model="form.imageFile" label="Subir Imagen" outlined dense accept="image/*"
+            @update:model-value="previewImage" class="q-mb-md custom-input" clearable>
+            <template v-slot:prepend>
+              <q-icon name="attach_file" />
+            </template>
+          </q-file>
+
+          <div v-if="imagePreviewUrl" class="q-mb-md text-center">
+            <q-img :src="imagePreviewUrl" style="max-width: 200px; height: auto; border-radius: 8px;" fit="contain"
+              class="shadow-2" />
+            <div class="text-caption text-grey-7 q-mt-sm">Previsualización de la imagen</div>
+          </div>
+          <div v-else-if="form.existingImageUrl && isEditing" class="q-mb-md text-center">
+            <q-img :src="form.existingImageUrl" style="max-width: 200px; height: auto; border-radius: 8px;"
+              fit="contain" class="shadow-2" />
+            <div class="text-caption text-grey-7 q-mt-sm">Imagen actual</div>
+          </div>
         </q-card-section>
 
         <q-card-actions align="right" class="dialog-actions-bg">
@@ -55,11 +85,10 @@
 </template>
 
 <script setup>
-// Tu script existente, sin cambios, para mantener la lógica intacta.
-// Asegúrate de que este bloque <script setup> esté presente en tu archivo original.
 import { ref, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { postData, getData, putData } from '../Services/jook.js';
+// Make sure your jook.js service can handle FormData for file uploads
+import { postData, getData, putData, deleteData as deleteAxiosData } from '../Services/jook.js';
 
 const $q = useQuasar();
 const categories = ref([]);
@@ -71,11 +100,17 @@ const form = ref({
   name: '',
   description: '',
   estado: 'activo',
+  imageFile: null, // Holds the File object for new upload
+  existingImageUrl: null, // Holds the URL of the existing image for display
 });
+
+const imagePreviewUrl = ref(null); // URL for displaying the newly selected image preview
 
 const columns = [
   { name: 'name', label: 'Nombre', field: 'name', sortable: true, align: 'left', classes: 'text-brown-9 text-bold', headerClasses: 'bg-brown-2 text-brown-9' },
   { name: 'description', label: 'Descripción', field: 'description', align: 'left', classes: 'text-brown-8', headerClasses: 'bg-brown-2 text-brown-9' },
+  { name: 'image', label: 'Imagen', field: 'image', align: 'center', headerClasses: 'bg-brown-2 text-brown-9' }, // New column for image
+  { name: 'estado', label: 'Estado', field: 'estado', sortable: true, align: 'center', classes: row => row.estado === 'activo' ? 'text-green-7 text-bold' : 'text-red-7 text-bold', headerClasses: 'bg-brown-2 text-brown-9' },
   { name: 'createdAt', label: 'Fecha de creación', field: row => new Date(row.createdAt).toLocaleDateString(), sortable: true, align: 'center', classes: 'text-brown-8', headerClasses: 'bg-brown-2 text-brown-9' },
   { name: 'acciones', label: 'Acciones', field: 'acciones', sortable: false, align: 'center', headerClasses: 'bg-brown-2 text-brown-9' },
 ];
@@ -91,29 +126,71 @@ const fetchCategories = async () => {
 const openAddDialog = () => {
   isEditing.value = false;
   currentId.value = null;
-  form.value = { name: '', description: '', estado: 'activo' };
+  form.value = { name: '', description: '', estado: 'activo', imageFile: null, existingImageUrl: null };
+  imagePreviewUrl.value = null; // Clear image preview
   dialog.value = true;
 };
 
 const openEditDialog = (row) => {
   isEditing.value = true;
   currentId.value = row._id;
-  form.value = { name: row.name, description: row.description, estado: row.estado };
+  form.value = {
+    name: row.name,
+    description: row.description,
+    estado: row.estado,
+    imageFile: null, // No file selected initially for edit
+    existingImageUrl: row.image, // Load existing image URL for display
+  };
+  imagePreviewUrl.value = null; // Clear image preview for new selection
   dialog.value = true;
+};
+
+const previewImage = (file) => {
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreviewUrl.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  } else {
+    imagePreviewUrl.value = null;
+  }
 };
 
 const saveCategory = async () => {
   try {
+    const formData = new FormData();
+    formData.append('name', form.value.name);
+    formData.append('description', form.value.description);
+    formData.append('estado', form.value.estado);
+
+    if (form.value.imageFile) {
+      formData.append('image', form.value.imageFile); // 'image' is the field name Multer expects
+    } else if (isEditing.value && form.value.existingImageUrl) {
+      // If no new file is selected but there's an existing image, and it's not being removed,
+      // you might want to send a flag or the URL to indicate it should be kept.
+      // Your backend currently assumes 'imagenExistente' from body or handles no file
+      // based on absence. We will send 'imagenExistente' if no new file is uploaded
+      // and we are editing.
+      formData.append('imagenExistente', form.value.existingImageUrl);
+    } else if (isEditing.value && !form.value.existingImageUrl && !form.value.imageFile) {
+      // If we are editing and both existingImageUrl and imageFile are null/empty,
+      // it implies the user wants to remove the image.
+      formData.append('eliminarImagenCategoria', 'true');
+    }
+
+
     if (isEditing.value && currentId.value) {
-      await putData(`/categoria/${currentId.value}`, form.value);
+      await putData(`/categoria/${currentId.value}`, formData, true); // Pass true for multipart/form-data
       $q.notify({ type: 'positive', message: 'Categoría actualizada', color: 'green-6', icon: 'check_circle' });
     } else {
-      await postData('/categoria', form.value);
+      await postData('/categoria', formData, true); // Pass true for multipart/form-data
       $q.notify({ type: 'positive', message: 'Categoría agregada', color: 'green-6', icon: 'check_circle' });
     }
     dialog.value = false;
     fetchCategories();
   } catch (err) {
+    console.error('Error al guardar categoría:', err);
     $q.notify({ type: 'negative', message: 'Error al guardar categoría', color: 'red-6', icon: 'error' });
   }
 };
@@ -121,7 +198,6 @@ const saveCategory = async () => {
 const cambiarEstado = async (row) => {
   const nuevoEstado = row.estado === 'activo' ? 'inactivo' : 'activo';
   try {
-    // Aquí puedes preguntar al usuario si está seguro
     $q.dialog({
       title: `Confirmar ${nuevoEstado === 'activo' ? 'Activación' : 'Desactivación'}`,
       message: `¿Estás seguro de que quieres ${nuevoEstado === 'activo' ? 'activar' : 'desactivar'} la categoría "${row.name}"?`,
@@ -129,7 +205,8 @@ const cambiarEstado = async (row) => {
       persistent: true,
       color: nuevoEstado === 'activo' ? 'green-6' : 'red-6',
     }).onOk(async () => {
-      await putData(`/categoria/${row._id}`, { ...row, estado: nuevoEstado });
+      // You can send a simple put request as state change doesn't involve file upload
+      await putData(`/categoria/estado/${row._id}/${nuevoEstado}`); // Use the new changeCategoriaEstado endpoint
       $q.notify({ type: 'positive', message: `Estado cambiado a ${nuevoEstado}`, color: 'green-6', icon: 'check_circle' });
       fetchCategories();
     }).onCancel(() => {
@@ -137,6 +214,27 @@ const cambiarEstado = async (row) => {
     });
   } catch (err) {
     $q.notify({ type: 'negative', message: 'Error al cambiar estado', color: 'red-6', icon: 'error' });
+  }
+};
+
+const deleteCategory = async (row) => {
+  try {
+    $q.dialog({
+      title: 'Confirmar Eliminación',
+      message: `¿Estás seguro de que quieres eliminar la categoría "${row.name}"? Esta acción no se puede deshacer.`,
+      cancel: true,
+      persistent: true,
+      color: 'negative',
+    }).onOk(async () => {
+      await deleteAxiosData(`/categoria/${row._id}`); // Use the new deleteCategoria endpoint
+      $q.notify({ type: 'positive', message: 'Categoría eliminada exitosamente.', color: 'green-6', icon: 'check_circle' });
+      fetchCategories();
+    }).onCancel(() => {
+      $q.notify({ type: 'info', message: 'Eliminación cancelada.', color: 'blue-6', icon: 'cancel' });
+    });
+  } catch (err) {
+    console.error('Error al eliminar categoría:', err);
+    $q.notify({ type: 'negative', message: 'Error al eliminar categoría', color: 'red-6', icon: 'error' });
   }
 };
 
@@ -272,4 +370,17 @@ onMounted(fetchCategories);
   min-height: 80px;
   /* Altura mínima para el textarea */
 }
+
+.full-width {
+  width: 100%;
+}
+
+.no-horizontal-scroll {
+  overflow-x: hidden;
+}
+
+.my-category-table {
+  table-layout: auto;
+}
+
 </style>
