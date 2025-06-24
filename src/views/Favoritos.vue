@@ -1,6 +1,5 @@
 <template>
   <q-page class="favorites-page">
-    <!-- Encabezado -->
     <div class="page-header bg-brown-1 q-pa-md">
       <q-toolbar class="text-brown-9">
         <q-toolbar-title class="text-h4">
@@ -14,10 +13,8 @@
       <q-separator color="brown-3" />
     </div>
 
-    <!-- Contenido -->
     <div class="page-content q-pa-md">
       <q-card class="favorites-card" flat bordered>
-        <!-- Lista de favoritos -->
         <template v-if="favoritos.length > 0">
           <q-list separator class="favorites-list">
             <q-item
@@ -54,8 +51,8 @@
                   <div class="col-6">
                     <q-item-label class="text-caption text-brown-7">
                       <q-icon name="category" size="sm" />
-                      Tipo: {{ getNombreTipos(producto.tipo) }}
-                    </q-item-label>
+                      Tipo: {{ getNombreTipo(producto.tipo) }}
+                      </q-item-label>
                   </div>
                 </div>
               </q-item-section>
@@ -67,7 +64,11 @@
                   </div>
                   <q-badge
                     :color="producto.stock > 0 ? 'green-6' : 'red-6'"
-                    :label="producto.stock > 0 ? 'Disponible (' + producto.stock + ')' : 'Agotado'"
+                    :label="
+                      producto.stock > 0
+                        ? 'Disponible (' + producto.stock + ')'
+                        : 'Agotado'
+                    "
                     rounded
                   />
                   <q-btn
@@ -84,7 +85,6 @@
           </q-list>
         </template>
 
-        <!-- Estado vacío -->
         <template v-else>
           <div class="empty-state column items-center q-pa-xl">
             <q-icon name="favorite_border" size="xl" color="brown-4" />
@@ -107,12 +107,11 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-
-import { cargarFavoritos } from "../utils/utils";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../Store/useAunt";
 import { useQuasar } from "quasar";
 import axios from "axios";
+// Asegúrate de que cargarFavoritos y formatNumberWithThousandsSeparator sean exportados y usados correctamente
 import { cargarFavoritos, formatNumberWithThousandsSeparator } from "../utils/utils.js";
 
 const $q = useQuasar();
@@ -139,7 +138,6 @@ const removeFromFavorites = (productId) => {
     color: "brown-8",
   }).onOk(async () => {
     try {
-
       const token = authStore.token;
       if (!token) {
         $q.notify({
@@ -152,7 +150,7 @@ const removeFromFavorites = (productId) => {
       }
 
       const res = await axios.post(
-        `http://localhost:3200/api/usuario/favoritos/${productId}`, // <- corregido "usuarios"
+        `http://localhost:3200/api/usuario/favoritos/${productId}`,
         {},
         {
           headers: {
@@ -165,7 +163,7 @@ const removeFromFavorites = (productId) => {
         authStore.removeFromFavorites(productId);
         $q.notify({
           message: "Producto eliminado de favoritos",
-          color: "brown-6",
+          color: "green",
           icon: "check",
           position: "top",
         });
@@ -180,8 +178,8 @@ const removeFromFavorites = (productId) => {
     } catch (error) {
       console.error("Error al eliminar de favoritos:", error);
       $q.notify({
-        message: "Error al eliminar el producto de favoritos. Por favor, inténtalo de nuevo.",
-
+        message:
+          "Error al eliminar el producto de favoritos. Por favor, inténtalo de nuevo.",
         color: "red-6",
         icon: "error",
         position: "top",
@@ -226,7 +224,6 @@ const getNombreMarca = (id) => {
   return marca ? marca.nombre : "Sin marca";
 };
 
-
 // Obtener nombre de tipo
 const getNombreTipo = (id) => {
   const tipo = tipos.value.find((t) => t._id === id);
@@ -238,9 +235,6 @@ onMounted(() => {
   cargarFavoritos();
   cargarMarcas();
   cargarTipos();
-
-  getNombreTipos();
-
 });
 </script>
 
@@ -248,12 +242,15 @@ onMounted(() => {
 .favorites-page {
   background-color: #fffaf4;
 }
+
 .product-image {
   border-radius: 12px;
 }
+
 .favorite-item {
   transition: background-color 0.2s;
 }
+
 .favorite-item:hover {
   background-color: #f9f1e7;
 }
