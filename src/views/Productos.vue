@@ -150,10 +150,25 @@ const applyFilters = async () => {
     const params = new URLSearchParams();
 
     if (search.value) params.append('search', search.value);
-    if (selectedFilters.value['Categoría']) params.append('categoria', selectedFilters.value['Categoría']._id || selectedFilters.value['Categoría']);
-    if (selectedFilters.value['Marca']) params.append('marca', selectedFilters.value['Marca'].nombre || selectedFilters.value['Marca']);
-    if (selectedFilters.value['Ordenar por']) params.append('sortBy', selectedFilters.value['Ordenar por']);
-    if (selectedFilters.value['Tipo de uso']) params.append('tipo', selectedFilters.value['Tipo de uso'].nombre || selectedFilters.value['Tipo de uso']);
+
+    if (selectedFilters.value['Categoría']) {
+      const cat = selectedFilters.value['Categoría'];
+      params.append('categoria', cat._id || cat); // si es objeto o id directo
+    }
+
+    if (selectedFilters.value['Marca']) {
+      const marca = selectedFilters.value['Marca'];
+      params.append('marca', marca.nombre || marca); // si es objeto o string
+    }
+
+    if (selectedFilters.value['Tipo de uso']) {
+      const tipo = selectedFilters.value['Tipo de uso'];
+      params.append('tipo', tipo.nombre || tipo); // si es objeto o string
+    }
+
+    if (selectedFilters.value['Ordenar por']) {
+      params.append('sortBy', selectedFilters.value['Ordenar por']);
+    }
 
     if (selectedFilters.value['Precio']) {
       switch (selectedFilters.value['Precio']) {
@@ -174,6 +189,7 @@ const applyFilters = async () => {
     products.value = [];
   }
 };
+
 
 const clearFilters = () => {
   selectedFilters.value = {
@@ -197,9 +213,9 @@ const loadFilterOptions = async () => {
     filterOptions.value = [
       { label: 'Ordenar por', options: ['Destacados', 'Precio: Menor a Mayor', 'Precio: Mayor a Menor'] },
       { label: 'Categoría', options: categorias },
-      { label: 'Marca', options: marcas.map(m => ({ nombre: m })) },
+      { label: 'Marca', options: marcas.map(m => m.nombre) },
       { label: 'Precio', options: ['Menos de $50', '$50 - $100', 'Más de $100'] },
-      { label: 'Tipo de uso', options: tiposDeUso.map(t => ({ nombre: t })) }
+      { label: 'Tipo de uso', options: tiposDeUso.map(t => t.nombre) }
     ];
 
     await applyFilters();

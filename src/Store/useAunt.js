@@ -1,4 +1,4 @@
-// stores/useAunt.js
+// stores/useAunt.jsMore actions
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { jwtDecode } from 'jwt-decode';
@@ -64,5 +64,5 @@ export const useAuthStore = defineStore('auth', () => {
         paths: ['token', 'user', 'userRole'],
       },
     ],
-  },
+},
 });

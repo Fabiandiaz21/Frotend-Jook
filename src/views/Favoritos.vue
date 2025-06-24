@@ -4,7 +4,8 @@
     <div class="page-header bg-brown-1 q-pa-md">
       <q-toolbar class="text-brown-9">
         <q-toolbar-title class="text-h4">
-          <q-icon name="favorite" class="q-mr-sm" /> Mis Favoritos
+          <q-icon name="favorite" class="q-mr-sm" />
+          Mis Favoritos
         </q-toolbar-title>
         <q-badge color="brown-6" rounded>
           {{ favoritos.length }} items
@@ -13,10 +14,10 @@
       <q-separator color="brown-3" />
     </div>
 
-    <!-- Contenido principal -->
+    <!-- Contenido -->
     <div class="page-content q-pa-md">
-      <!-- Lista de favoritos -->
       <q-card class="favorites-card" flat bordered>
+        <!-- Lista de favoritos -->
         <template v-if="favoritos.length > 0">
           <q-list separator class="favorites-list">
             <q-item
@@ -28,9 +29,7 @@
             >
               <q-item-section avatar>
                 <q-img
-                  :src="
-                    producto.images?.[0] || 'https://via.placeholder.com/150'
-                  "
+                  :src="producto.images?.[0] || 'https://via.placeholder.com/150'"
                   class="product-image"
                   ratio="1"
                   spinner-color="brown-6"
@@ -64,15 +63,11 @@
               <q-item-section side top>
                 <div class="column items-end">
                   <div class="product-price text-h6 text-brown-8 q-mb-xs">
-                    ${{ producto.price }}
+                    ${{ formatNumberWithThousandsSeparator(producto.price) }}
                   </div>
                   <q-badge
                     :color="producto.stock > 0 ? 'green-6' : 'red-6'"
-                    :label="
-                      producto.stock > 0
-                        ? 'Disponible (' + producto.stock + ')'
-                        : 'Agotado'
-                    "
+                    :label="producto.stock > 0 ? 'Disponible (' + producto.stock + ')' : 'Agotado'"
                     rounded
                   />
                   <q-btn
@@ -112,23 +107,29 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
+
 import { cargarFavoritos } from "../utils/utils";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../Store/useAunt";
 import { useQuasar } from "quasar";
 import axios from "axios";
+import { cargarFavoritos, formatNumberWithThousandsSeparator } from "../utils/utils.js";
 
 const $q = useQuasar();
-const authStore = useAuthStore();
 const router = useRouter();
+
+const authStore = useAuthStore();
+
 const favoritos = computed(() => authStore.favorites);
 const marcas = ref([]);
 const tipos = ref([]);
 
+// Navegar al detalle del producto
 const verDetalle = (id) => {
   router.push(`/vistap/${id}`);
 };
 
+// Eliminar un producto de favoritos
 const removeFromFavorites = (productId) => {
   $q.dialog({
     title: "Eliminar de favoritos",
@@ -138,18 +139,49 @@ const removeFromFavorites = (productId) => {
     color: "brown-8",
   }).onOk(async () => {
     try {
-      // Llama a tu endpoint toggleFavorito
-      await axios.put(`http://localhost:3200/api/usuarios/favoritos/${productId}`);
-      authStore.removeFromFavorites(productId); // Actualiza el store local
-      $q.notify({
-        message: "Producto eliminado de favoritos",
-        color: "brown-6",
-        icon: "check",
-        position: "top",
-      });
+
+      const token = authStore.token;
+      if (!token) {
+        $q.notify({
+          message: "No autenticado. Por favor, inicia sesión.",
+          color: "red-6",
+          icon: "warning",
+          position: "top",
+        });
+        return;
+      }
+
+      const res = await axios.post(
+        `http://localhost:3200/api/usuario/favoritos/${productId}`, // <- corregido "usuarios"
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.data.mensaje?.includes("eliminado")) {
+        authStore.removeFromFavorites(productId);
+        $q.notify({
+          message: "Producto eliminado de favoritos",
+          color: "brown-6",
+          icon: "check",
+          position: "top",
+        });
+      } else {
+        $q.notify({
+          message: "Este producto no estaba en favoritos",
+          color: "orange-6",
+          icon: "info",
+          position: "top",
+        });
+      }
     } catch (error) {
+      console.error("Error al eliminar de favoritos:", error);
       $q.notify({
-        message: "No se pudo eliminar en el servidor",
+        message: "Error al eliminar el producto de favoritos. Por favor, inténtalo de nuevo.",
+
         color: "red-6",
         icon: "error",
         position: "top",
@@ -158,9 +190,10 @@ const removeFromFavorites = (productId) => {
   });
 };
 
+// Cargar marcas
 const cargarMarcas = async () => {
   try {
-    const res = await axios.get("http://localhost:3200/api/marca"); // Ajusta la URL a tu backend
+    const res = await axios.get("http://localhost:3200/api/marca");
     marcas.value = res.data;
   } catch (error) {
     $q.notify({
@@ -172,18 +205,14 @@ const cargarMarcas = async () => {
   }
 };
 
-const getNombreMarca = (id) => {
-  const marca = marcas.value.find((m) => m._id === id);
-  return marca ? marca.nombre : "Sin marca";
-};
-
+// Cargar tipos
 const cargarTipos = async () => {
   try {
-    const res = await axios.get("http://localhost:3200/api/marca"); // Ajusta la URL a tu backend
+    const res = await axios.get("http://localhost:3200/api/tipo");
     tipos.value = res.data;
   } catch (error) {
     $q.notify({
-      message: "No se pudieron cargar las marcas",
+      message: "No se pudieron cargar los tipos de producto",
       color: "red-6",
       icon: "error",
       position: "top",
@@ -191,110 +220,41 @@ const cargarTipos = async () => {
   }
 };
 
-const getNombreTipos = (id) => {
-  const tipo = tipos.value.find((m) => m._id === id);
-  return tipo ? tipo.nombre : "Sin marca";
+// Obtener nombre de marca
+const getNombreMarca = (id) => {
+  const marca = marcas.value.find((m) => m._id === id);
+  return marca ? marca.nombre : "Sin marca";
 };
 
+
+// Obtener nombre de tipo
+const getNombreTipo = (id) => {
+  const tipo = tipos.value.find((t) => t._id === id);
+  return tipo ? tipo.nombre : "Sin tipo";
+};
+
+// Al montar el componente
 onMounted(() => {
   cargarFavoritos();
   cargarMarcas();
   cargarTipos();
+
   getNombreTipos();
+
 });
 </script>
 
 <style scoped>
 .favorites-page {
-  background-color: #f9f5f0;
+  background-color: #fffaf4;
 }
-
-.page-header {
-  border-bottom: 1px solid #e0d6cc;
-}
-
-.favorites-card {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(139, 69, 19, 0.1);
-  border: 1px solid #e0d6cc;
-}
-
-.favorites-list {
-  background-color: #fff;
-}
-
-.favorite-item {
-  transition: all 0.3s ease;
-  border-bottom: 1px solid #efebe9;
-}
-
-.favorite-item:last-child {
-  border-bottom: none;
-}
-
-.favorite-item:hover {
-  background-color: #f5efe8;
-  transform: translateX(2px);
-}
-
 .product-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 4px;
-  border: 1px solid #e0d6cc;
+  border-radius: 12px;
 }
-
-.product-name {
-  font-size: 1.1rem;
-  line-height: 1.4;
-}
-
-.product-description {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.product-price {
-  font-weight: 600;
-}
-
-.empty-state {
-  background-color: #fff;
-  border-radius: 8px;
-}
-
-/* Animación para los items */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .favorite-item {
-  animation: fadeIn 0.3s ease forwards;
+  transition: background-color 0.2s;
 }
-
-.favorite-item:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.favorite-item:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.favorite-item:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.favorite-item:nth-child(4) {
-  animation-delay: 0.4s;
-}
-.favorite-item:nth-child(5) {
-  animation-delay: 0.5s;
+.favorite-item:hover {
+  background-color: #f9f1e7;
 }
 </style>
