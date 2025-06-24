@@ -54,7 +54,7 @@
                   <div class="col-6">
                     <q-item-label class="text-caption text-brown-7">
                       <q-icon name="category" size="sm" />
-                      Tipo: {{ getNombreTipo(producto.tipo) }}
+                      Tipo: {{ getNombreTipos(producto.tipo) }}
                     </q-item-label>
                   </div>
                 </div>
@@ -107,6 +107,8 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
+
+import { cargarFavoritos } from "../utils/utils";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../Store/useAunt";
 import { useQuasar } from "quasar";
@@ -115,6 +117,7 @@ import { cargarFavoritos, formatNumberWithThousandsSeparator } from "../utils/ut
 
 const $q = useQuasar();
 const router = useRouter();
+
 const authStore = useAuthStore();
 
 const favoritos = computed(() => authStore.favorites);
@@ -136,6 +139,7 @@ const removeFromFavorites = (productId) => {
     color: "brown-8",
   }).onOk(async () => {
     try {
+
       const token = authStore.token;
       if (!token) {
         $q.notify({
@@ -177,6 +181,7 @@ const removeFromFavorites = (productId) => {
       console.error("Error al eliminar de favoritos:", error);
       $q.notify({
         message: "Error al eliminar el producto de favoritos. Por favor, inténtalo de nuevo.",
+
         color: "red-6",
         icon: "error",
         position: "top",
@@ -221,6 +226,7 @@ const getNombreMarca = (id) => {
   return marca ? marca.nombre : "Sin marca";
 };
 
+
 // Obtener nombre de tipo
 const getNombreTipo = (id) => {
   const tipo = tipos.value.find((t) => t._id === id);
@@ -232,6 +238,9 @@ onMounted(() => {
   cargarFavoritos();
   cargarMarcas();
   cargarTipos();
+
+  getNombreTipos();
+
 });
 </script>
 
