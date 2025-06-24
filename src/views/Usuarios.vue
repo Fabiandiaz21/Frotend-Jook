@@ -1,7 +1,46 @@
 <template>
   <q-page class="q-pa-md bg-white">
-    <q-table title="Usuarios" :rows="categories" :columns="columns" row-key="_id" :loading="loading"
-      :pagination="initialPagination" class="my-sticky-header-table" flat bordered>
+    <div class="q-mb-md row items-center q-gutter-md">
+      <q-input
+        outlined
+        dense
+        v-model="searchQuery"
+        placeholder="Buscar por nombre o email"
+        class="col-grow"
+        clearable
+        @clear="clearSearch"
+        @keyup.enter="performSearch"
+      >
+        <template v-slot:append>
+          <q-icon v-if="searchQuery === ''" name="search" />
+          <q-icon v-else name="clear" class="cursor-pointer" @click="clearSearch" />
+        </template>
+      </q-input>
+      <q-btn
+        label="Buscar"
+        color="brown-7"
+        @click="performSearch"
+        icon="search"
+      />
+      <q-btn
+        label="Mostrar Todos"
+        color="grey-7"
+        @click="resetSearch"
+        icon="refresh"
+        v-if="searchActive"
+      />
+    </div>
+
+    <q-table
+      title="Usuarios"
+      :rows="users" :columns="columns"
+      row-key="_id"
+      :loading="loading"
+      :pagination="initialPagination"
+      class="my-sticky-header-table"
+      flat
+      bordered
+    >
       <template v-slot:body-cell-estado="props">
         <q-td :props="props">
           <q-badge :color="props.row.estado === 'Activo' ? 'green' : 'red'" text-color="white" class="q-pa-xs">
@@ -37,13 +76,15 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { date, useQuasar } from 'quasar';
-import { getData } from '../Services/jook.js'; // Asumiendo que postData y putData no son necesarios para la tabla de visualización.
+import { getData } from '../Services/jook.js';
 
 const $q = useQuasar();
-const categories = ref([]);
+const users = ref([]); // Cambiado de categories a users
 const loading = ref(true);
+const searchQuery = ref(''); // Nuevo ref para el término de búsqueda
+const searchActive = ref(false); // Para controlar si la búsqueda está activa
 
-// Definición de las columnas de la tabla
+// Definición de las columnas de la tabla (sin cambios significativos)
 const columns = [
   {
     name: 'name',
@@ -52,8 +93,8 @@ const columns = [
     align: 'left',
     field: 'name',
     sortable: true,
-    classes: 'text-brown-9', // Clase para el texto del nombre
-    headerClasses: 'bg-brown-2 text-brown-9', // Clase para el encabezado
+    classes: 'text-brown-9',
+    headerClasses: 'bg-brown-2 text-brown-9',
   },
   {
     name: 'email',
@@ -108,19 +149,52 @@ const initialPagination = {
   rowsPerPage: 10,
 };
 
-const fetchCategories = async () => {
+// Función para obtener usuarios (modificada para soportar búsqueda)
+const fetchUsers = async (query = '') => {
+  loading.value = true;
   try {
-    categories.value = await getData('/usuario');
+    let url = '/usuario';
+    if (query) {
+      url = `/usuario/usuarios/search?query=${encodeURIComponent(query)}`;
+      searchActive.value = true;
+    } else {
+      searchActive.value = false;
+    }
+    const response = await getData(url);
+    users.value = response; // Asignar a users.value
   } catch (err) {
+    console.error("Error fetching users:", err);
+    let errorMessage = 'Error al cargar usuarios. Intenta de nuevo más tarde.';
+    if (err.response && err.response.status === 404) {
+      errorMessage = 'No se encontraron usuarios que coincidan con la búsqueda.';
+    }
     $q.notify({
       type: 'negative',
-      message: 'Error al cargar usuarios. Intenta de nuevo más tarde.',
+      message: errorMessage,
       color: 'red-6',
       icon: 'error',
     });
+    users.value = []; // Vaciar la tabla si hay un error o no hay resultados
   } finally {
     loading.value = false;
   }
+};
+
+// Función para ejecutar la búsqueda
+const performSearch = () => {
+  fetchUsers(searchQuery.value);
+};
+
+// Función para limpiar la búsqueda
+const clearSearch = () => {
+  searchQuery.value = '';
+  // No llamamos a fetchUsers aquí para evitar doble llamada si el usuario solo borra sin presionar Enter/Buscar
+};
+
+// Función para restablecer la búsqueda y mostrar todos los usuarios
+const resetSearch = () => {
+  searchQuery.value = '';
+  fetchUsers(); // Llama sin query para obtener todos los usuarios
 };
 
 function formatDate(dateStr) {
@@ -155,8 +229,8 @@ function eliminarUsuario(userId) {
         icon: 'check_circle',
       });
       console.log('Eliminar usuario:', userId);
-      // Actualizar la lista de categorías después de eliminar
-      // fetchCategories(); // Descomentar si la eliminación se maneja en el frontend directamente
+      // Actualizar la lista de usuarios después de eliminar
+      // fetchUsers(); // Descomentar si la eliminación se maneja en el frontend directamente
     })
     .onCancel(() => {
       $q.notify({
@@ -169,11 +243,15 @@ function eliminarUsuario(userId) {
 }
 
 onMounted(() => {
-  fetchCategories();
+  fetchUsers(); // Carga inicial de todos los usuarios
 });
 </script>
 
+
 <style scoped>
+
+
+
 /* Fondo blanco para la página */
 .bg-white {
   background-color: #ffffff;
