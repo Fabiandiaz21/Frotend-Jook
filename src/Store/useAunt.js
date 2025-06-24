@@ -1,4 +1,4 @@
-// stores/useAunt.js
+// stores/useAunt.jsMore actions
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { jwtDecode } from 'jwt-decode';
@@ -37,6 +37,10 @@ export const useAuthStore = defineStore('auth', () => {
     return !!token.value;
   };
 
+  const removeFromFavorites = (id) => {
+  favorites.value = favorites.value.filter(p => p._id !== id);
+};
+
   return {
     token,
     user,
@@ -48,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
     setUserRole,
     clearAuth,
     isLoggedIn,
+    removeFromFavorites
   };
 }, {
   persist: {
@@ -59,5 +64,5 @@ export const useAuthStore = defineStore('auth', () => {
         paths: ['token', 'user', 'userRole'],
       },
     ],
-  },
+},
 });
