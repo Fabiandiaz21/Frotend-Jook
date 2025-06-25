@@ -17,20 +17,11 @@
       <q-card class="favorites-card" flat bordered>
         <template v-if="favoritos.length > 0">
           <q-list separator class="favorites-list">
-            <q-item
-              v-for="producto in favoritos"
-              :key="producto._id"
-              clickable
-              @click="verDetalle(producto._id)"
-              class="favorite-item"
-            >
+            <q-item v-for="producto in favoritos" :key="producto._id" clickable @click="verDetalle(producto._id)"
+              class="favorite-item">
               <q-item-section avatar>
-                <q-img
-                  :src="producto.images?.[0] || 'https://via.placeholder.com/150'"
-                  class="product-image"
-                  ratio="1"
-                  spinner-color="brown-6"
-                />
+                <q-img :src="producto.images?.[0] || 'https://via.placeholder.com/150'" class="product-image" ratio="1"
+                  spinner-color="brown-6" />
               </q-item-section>
 
               <q-item-section>
@@ -52,7 +43,7 @@
                     <q-item-label class="text-caption text-brown-7">
                       <q-icon name="category" size="sm" />
                       Tipo: {{ getNombreTipo(producto.tipo) }}
-                      </q-item-label>
+                    </q-item-label>
                   </div>
                 </div>
               </q-item-section>
@@ -62,23 +53,12 @@
                   <div class="product-price text-h6 text-brown-8 q-mb-xs">
                     ${{ formatNumberWithThousandsSeparator(producto.price) }}
                   </div>
-                  <q-badge
-                    :color="producto.stock > 0 ? 'green-6' : 'red-6'"
-                    :label="
-                      producto.stock > 0
-                        ? 'Disponible (' + producto.stock + ')'
-                        : 'Agotado'
-                    "
-                    rounded
-                  />
-                  <q-btn
-                    round
-                    flat
-                    color="brown-6"
-                    icon="delete"
-                    @click.stop="removeFromFavorites(producto._id)"
-                    class="q-mt-sm"
-                  />
+                  <q-badge :color="producto.stock > 0 ? 'green-6' : 'red-6'" :label="producto.stock > 0
+                      ? 'Disponible (' + producto.stock + ')'
+                      : 'Agotado'
+                    " rounded />
+                  <q-btn round flat color="brown-6" icon="delete" @click.stop="removeFromFavorites(producto._id)"
+                    class="q-mt-sm" />
                 </div>
               </q-item-section>
             </q-item>
@@ -91,13 +71,8 @@
             <div class="text-h6 text-brown-7 q-mt-md">
               No tienes productos favoritos aún
             </div>
-            <q-btn
-              label="Explorar productos"
-              color="brown-6"
-              unelevated
-              class="q-mt-md"
-              @click="router.push('/productos')"
-            />
+            <q-btn label="Explorar productos" color="brown-6" unelevated class="q-mt-md"
+              @click="router.push('/productos')" />
           </div>
         </template>
       </q-card>
@@ -110,7 +85,9 @@ import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "../Store/useAunt";
 import { useQuasar } from "quasar";
-import axios from "axios";
+import { getData, postData } from '../Services/jook.js';
+
+
 // Asegúrate de que cargarFavoritos y formatNumberWithThousandsSeparator sean exportados y usados correctamente
 import { cargarFavoritos, formatNumberWithThousandsSeparator } from "../utils/utils.js";
 
@@ -149,9 +126,10 @@ const removeFromFavorites = (productId) => {
         return;
       }
 
-      const res = await axios.post(
-        `http://localhost:3200/api/usuario/favoritos/${productId}`,
-        {},
+      // Usando postData en lugar de axios.post
+      const res = await postData(
+        `/usuario/favoritos/${productId}`,
+        {}, // El cuerpo de la solicitud es vacío para esta API
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -159,7 +137,8 @@ const removeFromFavorites = (productId) => {
         }
       );
 
-      if (res.data.mensaje?.includes("eliminado")) {
+      // Asumiendo que `res` contiene la respuesta del servidor directamente (no anidada en `.data`)
+      if (res.mensaje?.includes("eliminado")) {
         authStore.removeFromFavorites(productId);
         $q.notify({
           message: "Producto eliminado de favoritos",
@@ -191,8 +170,9 @@ const removeFromFavorites = (productId) => {
 // Cargar marcas
 const cargarMarcas = async () => {
   try {
-    const res = await axios.get("http://localhost:3200/api/marca");
-    marcas.value = res.data;
+    // Usando getData en lugar de axios.get
+    const res = await getData("/marca");
+    marcas.value = res; // Asumiendo que getData retorna los datos directamente
   } catch (error) {
     $q.notify({
       message: "No se pudieron cargar las marcas",
@@ -206,8 +186,9 @@ const cargarMarcas = async () => {
 // Cargar tipos
 const cargarTipos = async () => {
   try {
-    const res = await axios.get("http://localhost:3200/api/tipo");
-    tipos.value = res.data;
+    // Usando getData en lugar de axios.get
+    const res = await getData("/tipo");
+    tipos.value = res; // Asumiendo que getData retorna los datos directamente
   } catch (error) {
     $q.notify({
       message: "No se pudieron cargar los tipos de producto",
